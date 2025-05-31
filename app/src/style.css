@@ -1,0 +1,9 @@
+/* Basic styles if needed, Tailwind will be primary */
+/*body {
+    font-family: sans-serif;
+}*/
+
+/* Ensure Font Awesome icons are vertically aligned well with text if needed */
+.fas {
+    vertical-align: -0.125em; /* Default Font Awesome alignment, adjust if necessary */
+}
