@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>分类管理系统</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css">
+    <link rel="stylesheet" href="assets/css/styles.css">
+</head>
+<body class="bg-gray-100 min-h-screen p-4">
+    <div class="container mx-auto">
+        <div class="flex justify-between items-center mb-6">
+            <h1 class="text-2xl font-bold">分类管理系统</h1>
+            <div class="flex gap-2">
+                <a href="index.html" class="btn btn-secondary">返回产品管理</a>
+            </div>
+        </div>
+        
+        <!-- 搜索和操作按钮 -->
+        <div class="flex justify-between items-center mb-4">
+            <div class="w-2/3">
+                <input id="searchInput" type="text" placeholder="搜索..." class="form-input">
+            </div>
+            <div class="flex gap-2">
+                <button id="addNewBtn" class="btn btn-add">添加新分类</button>
+                <button id="checkAllCodeConsistencyBtn" class="btn btn-warning">全库编码一致性检查</button>
+                <button id="exportBtn" class="btn btn-secondary">导出CSV</button>
+                <button id="importBtn" class="btn btn-secondary">导入CSV</button>
+                <input type="file" id="fileInput" accept=".csv" style="display: none;">
+            </div>
+        </div>
+        
+        <!-- 活动过滤器 - 移到搜索框下面 -->
+        <div class="mb-4">
+            <h3 class="font-semibold mb-2">活动过滤器</h3>
+            <div id="activeFilters" class="flex flex-wrap gap-2"></div>
+        </div>
+        
+        <!-- 主内容区域 - 集成过滤器和数据显示 -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <!-- 过滤区域 -->
+            <div class="md:col-span-1">
+                <div class="filter-section mb-4">
+                    <h3 class="font-semibold mb-2">用途</h3>
+                    <div id="用途Filter" class="filter-content"></div>
+                </div>
+                
+                <div class="filter-section mb-4">
+                    <h3 class="font-semibold mb-2">产品分类</h3>
+                    <div id="产品分类Filter" class="filter-content"></div>
+                </div>
+                
+                <div class="filter-section mb-4">
+                    <h3 class="font-semibold mb-2">产品细分</h3>
+                    <div id="产品细分Filter" class="filter-content"></div>
+                </div>
+                
+                <div class="filter-section mb-4">
+                    <h3 class="font-semibold mb-2">细分说明</h3>
+                    <div id="细分说明Filter" class="filter-content"></div>
+                </div>
+                
+                <!-- 活动过滤器已移动到搜索框下面 -->
+            </div>
+            
+            <!-- 数据显示区域 - 表格 -->
+            <div class="md:col-span-3">
+                <div class="bg-white rounded-lg shadow overflow-hidden">
+                    <div class="table-responsive">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>用途/英文</th>
+                                    <th>产品分类/英文</th>
+                                    <th>产品细分/英文</th>
+                                    <th>细分说明/英文</th>
+                                    <th>分类编码</th>
+                                    <th>操作</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tableBody">
+                                <!-- 数据将通过JavaScript动态加载 -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 添加/编辑分类的模态框 -->
+    <div id="modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modalTitle">添加新分类</h2>
+                <button id="closeModal" class="close-btn">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="categoryForm">
+                    <input type="hidden" id="categoryId" name="categoryId">
+                    <input type="hidden" id="用途ID" name="用途ID">
+                    <input type="hidden" id="产品分类ID" name="产品分类ID">
+                    <input type="hidden" id="产品细分ID" name="产品细分ID">
+                    <input type="hidden" id="细分说明ID" name="细分说明ID">
+                    
+                    <div class="form-group">
+                        <label for="用途">用途:</label>
+                        <select id="用途" name="用途" class="form-control" required>
+                            <option value="">请选择用途</option>
+                        </select>
+                        <label for="epurpose_name" class="mt-1">英文用途:</label>
+                        <input type="text" id="epurpose_name" name="epurpose_name" class="form-control" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="产品分类">产品分类:</label>
+                        <select id="产品分类" name="产品分类" class="form-control" required>
+                            <option value="">请选择产品分类</option>
+                        </select>
+                        <label for="ecategory_name" class="mt-1">英文产品分类:</label>
+                        <input type="text" id="ecategory_name" name="ecategory_name" class="form-control" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="产品细分">产品细分:</label>
+                        <select id="产品细分" name="产品细分" class="form-control" required>
+                            <option value="">请选择产品细分</option>
+                        </select>
+                        <label for="esubcategory_name" class="mt-1">英文产品细分:</label>
+                        <input type="text" id="esubcategory_name" name="esubcategory_name" class="form-control" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="细分说明">细分说明:</label>
+                        <select id="细分说明" name="细分说明" class="form-control" required>
+                            <option value="">请选择细分说明</option>
+                        </select>
+                        <label for="edetail_name" class="mt-1">英文细分说明:</label>
+                        <input type="text" id="edetail_name" name="edetail_name" class="form-control" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="code">分类编码:</label>
+                        <input type="text" id="code" name="code" class="form-control" readonly>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <!-- 添加模式按钮组 -->
+                <div id="addModeButtons" style="display: none;">
+                    <button type="button" id="saveBtn" class="btn btn-primary">保存</button>
+                    <button type="button" id="closeModal" class="btn btn-secondary">取消</button>
+                </div>
+                
+                <!-- 编辑模式按钮组 -->
+                <div id="editModeButtons" style="display: none;">
+                    <button type="button" id="saveBtn" class="btn btn-primary">保存</button>
+                    <button type="button" id="closeModal" class="btn btn-secondary">取消</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- JavaScript 文件 -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="config/config.js"></script>
+    <script src="config/supabase-config.js"></script>
+    <script src="assets/js/app.js"></script>
+    <script src="services/category-service.js"></script>
+    <script src="assets/js/category-management-app.js"></script>
+</body>
+</html>

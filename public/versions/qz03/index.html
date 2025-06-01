@@ -1,0 +1,1357 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>产品数据库管理系统 (PDDB)</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="assets/css/styles.css">
+    <style>
+        .file-upload-container {
+            border: 2px dashed #cbd5e0;
+            border-radius: 0.5rem;
+            padding: 1.5rem;
+            text-align: center;
+            transition: all 0.3s;
+        }
+        .file-upload-container:hover {
+            border-color: #4299e1;
+        }
+        .preview-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-top: 1rem;
+        }
+        .preview-item {
+            position: relative;
+            width: 100px;
+            height: 100px;
+            border-radius: 0.25rem;
+            overflow: hidden;
+        }
+        .preview-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .preview-item .remove-btn {
+            position: absolute;
+            top: 0.25rem;
+            right: 0.25rem;
+            background: rgba(0, 0, 0, 0.5);
+            color: white;
+            width: 1.5rem;
+            height: 1.5rem;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+        }
+        .tab-content {
+            display: block;
+        }
+        .tab-content.hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen">
+    <div class="container mx-auto px-4 py-8">
+        <header class="mb-8">
+            <h1 class="text-3xl font-bold text-gray-800">产品数据库管理系统 (PDDB)</h1>
+            <p class="text-gray-600 mt-2">基于Supabase的产品管理ERP系统</p>
+        </header>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <!-- 产品分类管理卡片 -->
+            <div class="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow">
+                <div class="p-6">
+                    <h2 class="text-xl font-semibold text-gray-800 mb-2">产品分类管理</h2>
+                    <p class="text-gray-600 mb-4">支持产品分类的搜索与多选，进入分类管理界面。</p>
+                    
+                    <!-- 分类搜索框 -->
+                    <div class="mb-4">
+                        <input type="text" class="w-full border rounded px-3 py-2 mb-2" placeholder="搜索产品分类..." id="categorySearchInput">
+                        <div class="flex flex-wrap gap-1 mb-2">
+                            <span class="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">工具类 ×</span>
+                            <span class="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">电子类 ×</span>
+                        </div>
+                    </div>
+                    
+                    <a href="category-management.html" class="inline-block bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 px-4 rounded transition-colors">
+                        进入管理
+                    </a>
+                </div>
+            </div>
+
+            <!-- 产品管理卡片 -->
+            <div class="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow">
+                <div class="p-6">
+                    <h2 class="text-xl font-semibold text-gray-800 mb-2">产品管理</h2>
+                    <p class="text-gray-600 mb-4">在已选分类下搜索产品，进入产品管理界面。</p>
+                    
+                    <!-- 产品分类多选和搜索 -->
+                    <div class="mb-4">
+                        <select multiple class="w-full border rounded px-3 py-2 mb-2 text-sm" id="productCategoryFilter">
+                            <option selected>工具类</option>
+                            <option>电子类</option>
+                            <option>家居类</option>
+                        </select>
+                        <input type="text" class="w-full border rounded px-3 py-2" placeholder="搜索产品名称/编码..." id="productSearchInput">
+                    </div>
+                    
+                    <a href="product-management-qz02.html" class="inline-block bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 px-4 rounded transition-colors">
+                        进入管理
+                    </a>
+                </div>
+            </div>
+
+            <!-- 客户/供应商管理卡片 -->
+            <div class="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow">
+                <div class="p-6">
+                    <h2 class="text-xl font-semibold text-gray-800 mb-2">客户/供应商管理</h2>
+                    <p class="text-gray-600 mb-4">支持客户/供应商的搜索，权限控制，进入对应管理界面。</p>
+                    
+                    <!-- 客户/供应商类型选择和搜索 -->
+                    <div class="mb-4">
+                        <select class="w-full border rounded px-3 py-2 mb-2" id="clientVendorTypeSelect">
+                            <option value="client">客户</option>
+                            <option value="vendor">供应商</option>
+                        </select>
+                        <input type="text" class="w-full border rounded px-3 py-2" placeholder="搜索客户/供应商..." id="clientVendorSearchInput">
+                    </div>
+                    
+                    <a href="#" class="inline-block bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 px-4 rounded transition-colors">
+                        进入管理
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- 产品展示区（下部，左右两栏） -->
+        <div class="mt-8 bg-white rounded-lg shadow-md overflow-hidden">
+            <div class="p-4 bg-gray-50 border-b">
+                <h2 class="text-xl font-semibold text-gray-800">产品展示与管理</h2>
+            </div>
+            
+            <div class="flex flex-col md:flex-row">
+                <!-- 左侧：产品展示区 -->
+                <div class="w-full md:w-1/2 p-4 border-r">
+                    <h3 class="text-lg font-medium mb-4">产品展示</h3>
+                    
+                    <!-- 产品图片轮播 -->
+                    <div class="flex flex-row items-center justify-center mb-4">
+                        <button class="px-2 text-gray-600 hover:text-gray-900" id="prevImageBtn">&lt;</button>
+                        <div class="relative w-64 h-64 mx-2 border rounded">
+                            <img src="assets/images/placeholder.jpg" alt="产品图片" class="w-full h-full object-contain" id="mainProductImage">
+                            <div class="absolute bottom-2 right-2 bg-gray-800 bg-opacity-50 text-white text-xs px-2 py-1 rounded">1/3</div>
+                        </div>
+                        <button class="px-2 text-gray-600 hover:text-gray-900" id="nextImageBtn">&gt;</button>
+                    </div>
+                    
+                    <!-- 缩略图预览 -->
+                    <div class="flex justify-center space-x-2 mb-4" id="thumbnailPreview">
+                        <div class="w-12 h-12 border rounded p-1 cursor-pointer border-blue-500">
+                            <img src="assets/images/placeholder.jpg" alt="缩略图1" class="w-full h-full object-contain">
+                        </div>
+                        <div class="w-12 h-12 border rounded p-1 cursor-pointer">
+                            <img src="assets/images/placeholder2.jpg" alt="缩略图2" class="w-full h-full object-contain">
+                        </div>
+                        <div class="w-12 h-12 border rounded p-1 cursor-pointer">
+                            <img src="assets/images/placeholder3.jpg" alt="缩略图3" class="w-full h-full object-contain">
+                        </div>
+                    </div>
+                    
+                    <!-- 产品描述 -->
+                    <div class="mb-4">
+                        <div class="text-gray-700 text-sm">中文描述：</div>
+                        <div class="text-black font-semibold mb-2" id="descCn">铝合金手柄+钢合金刀头，1+5片刀片，灰色</div>
+                        
+{{ ... }}
+                        <div class="text-gray-700 text-sm">英文描述：</div>
+                        <div class="mb-2" id="descEn">1 FOLDING utility knife with blade, 5 replacement blades</div>
+                        
+                        <div class="text-gray-700 text-sm">发货描述：</div>
+                        <div class="mb-2" id="descDelivery">1 FOLDING utility knife with blade<br>5 replacement blades</div>
+                    </div>
+                    
+                    <!-- 编辑按钮 -->
+                    <div class="mt-4 flex justify-end">
+                        <button class="bg-green-500 hover:bg-green-600 text-white text-sm px-3 py-1 rounded mr-2" id="copyProductBtn">复制为新产品</button>
+                        <a href="product-management-qz02.html" class="bg-blue-500 hover:bg-blue-600 text-white text-sm px-3 py-1 rounded mr-2">
+                            编辑产品
+                        </a>
+                        <button class="bg-red-500 hover:bg-red-600 text-white text-sm px-3 py-1 rounded">删除产品</button>
+                    </div>
+                    
+                    <!-- 产品详细信息表格 - 从右侧规格获取数据 -->
+                    <div class="flex justify-between items-center mb-2">
+                        <span class="text-sm font-medium">产品详细信息</span>
+                        <button class="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded" id="togglePriceBtn">显示价格</button>
+                    </div>
+                    <table class="w-full text-xs border-t mt-2">
+                        <tr class="bg-gray-50">
+                            <td class="py-1 px-2 border">产品编码</td>
+                            <td class="py-1 px-2 border" id="codeCell">T001</td>
+                            <td class="py-1 px-2 border">材质</td>
+                            <td class="py-1 px-2 border" id="materialCell">铝合金+钢合金</td>
+                            <td class="py-1 px-2 border">颜色</td>
+                            <td class="py-1 px-2 border" id="colorCell">灰色</td>
+                        </tr>
+                        <tr>
+                            <td class="py-1 px-2 border">外形尺寸</td>
+                            <td class="py-1 px-2 border" id="sizeCell">61*19*0.6mm</td>
+                            <td class="py-1 px-2 border price-column hidden">报价</td>
+                            <td class="py-1 px-2 border price-column hidden" id="priceCell">$5.99</td>
+                            <td class="py-1 px-2 border">刀片数量</td>
+                            <td class="py-1 px-2 border" id="bladeQtyCell">1+5片</td>
+                        </tr>
+                    </table>
+                    
+                    <!-- 编辑按钮 -->
+                    <div class="flex justify-end mt-4">
+                        <a href="product-management-qz02.html" class="bg-blue-500 text-white px-3 py-1 rounded text-sm">
+                            编辑产品
+                        </a>
+                    </div>
+                </div>
+                
+                <!-- 右侧：供应商/客户产品配置区 - 分为上、中、下三个功能区 -->
+                <div class="w-full md:w-1/2 p-4 bg-white rounded-lg shadow-md flex flex-col h-full">
+                    <!-- 上区：图片和说明文字展示区 -->
+                    <div class="border-b pb-3 mb-3" id="productInfoTopArea">
+                        <div class="flex items-start">
+                            <!-- 产品图片 -->
+                            <div class="w-20 h-20 bg-gray-200 rounded flex items-center justify-center mr-3 overflow-hidden">
+                                <img src="assets/images/placeholder.jpg" alt="产品图片" class="object-cover w-full h-full" id="productImage">
+                            </div>
+                            <!-- 产品基本信息 -->
+                            <div class="flex-1">
+                                <h3 class="text-lg font-medium text-gray-800" id="productTitle">折叠美工刀</h3>
+                                <p class="text-xs text-gray-500 mb-1" id="productCode">A001-01</p>
+                                <div class="grid grid-cols-2 gap-x-2 gap-y-1 text-xs mt-2">
+                                    <div class="flex justify-between">
+                                        <span class="text-gray-500">产品分类:</span>
+                                        <span id="productCategory">电子产品</span>
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <span class="text-gray-500">产品属性:</span>
+                                        <span id="productType">单件</span>
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <span class="text-gray-500">供应商数:</span>
+                                        <span class="bg-blue-100 text-blue-800 px-1 rounded" id="vendorCount">2</span>
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <span class="text-gray-500">客户数:</span>
+                                        <span class="bg-green-100 text-green-800 px-1 rounded" id="customerCount">3</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 中区：Tab区 -->
+                    <div class="mb-3" id="productTabsArea">
+                        <div class="flex border-b">
+                            <button class="px-3 py-2 text-sm font-medium text-blue-600 border-b-2 border-blue-600 -mb-px" data-tab="specs">
+                                规格
+                            </button>
+                            <button class="px-3 py-2 text-sm font-medium text-gray-500 hover:text-gray-700" data-tab="bundle">
+                                组套
+                            </button>
+                            <button class="px-3 py-2 text-sm font-medium text-gray-500 hover:text-gray-700" data-tab="vendor">
+                                供应商
+                            </button>
+                            <button class="px-3 py-2 text-sm font-medium text-gray-500 hover:text-gray-700" data-tab="customer">
+                                客户
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- 下区：详细信息和操作区 -->
+                    <div class="flex-1 overflow-auto" id="productDetailArea">
+                        <!-- 规格 Tab 内容 -->
+                        <div class="tab-content" id="specsTabContent">
+                            <div class="flex justify-between items-center mb-2">
+                                <h4 class="text-sm font-medium">产品规格信息</h4>
+                                <div class="flex space-x-1">
+                                    <button class="bg-blue-500 text-white text-xs px-2 py-1 rounded" id="addSpecBtn">
+                                        <i class="fas fa-plus"></i> 添加分类
+                                    </button>
+                                    <button class="bg-gray-300 text-gray-700 text-xs px-2 py-1 rounded" id="deleteSpecBtn" disabled>
+                                        <i class="fas fa-trash"></i> 删除分类
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <!-- 规格表格 -->
+                            <table class="w-full text-xs border">
+                                <thead class="bg-gray-50">
+                                    <tr>
+                                        <th class="px-2 py-1 border text-left">属性名称</th>
+                                        <th class="px-2 py-1 border text-left">属性值</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td class="px-2 py-1 border">材质</td>
+                                        <td class="px-2 py-1 border">铝合金+钢合金</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="px-2 py-1 border">颜色</td>
+                                        <td class="px-2 py-1 border">灰色</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="px-2 py-1 border">外形尺寸</td>
+                                        <td class="px-2 py-1 border">61*19*0.6mm</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="px-2 py-1 border">刀片数量</td>
+                                        <td class="px-2 py-1 border">1+5片</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                            
+                            <!-- 供应商/客户按钮区 -->
+                            <div class="flex justify-between items-center mt-4 mb-2">
+                                <h4 class="text-sm font-medium">关联信息</h4>
+                                <div class="flex space-x-1">
+                                    <button class="bg-gray-300 text-gray-700 text-xs px-2 py-1 rounded" id="addVendorBtn" disabled>
+                                        <i class="fas fa-plus"></i> 添加供应商
+                                    </button>
+                                    <button class="bg-gray-300 text-gray-700 text-xs px-2 py-1 rounded" id="addCustomerBtn" disabled>
+                                        <i class="fas fa-plus"></i> 添加客户
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- 组套 Tab 内容 -->
+                        <div class="tab-content hidden" id="bundleTabContent">
+                            <div class="flex justify-between items-center mb-2">
+                                <h4 class="text-sm font-medium">组套产品信息</h4>
+                                <div class="flex space-x-1">
+                                    <button class="bg-gray-300 text-gray-700 text-xs px-2 py-1 rounded" id="addBundleItemBtn" disabled>
+                                        <i class="fas fa-plus"></i> 添加产品
+                                    </button>
+                                    <button class="bg-gray-300 text-gray-700 text-xs px-2 py-1 rounded" id="deleteBundleItemBtn" disabled>
+                                        <i class="fas fa-trash"></i> 删除产品
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <!-- 组套产品列表 -->
+                            <div class="text-xs text-gray-500 italic mb-2">当前产品属性为"单件"，组套功能不可用。请先将产品属性修改为"组套"。</div>
+                        </div>
+                        
+                        <!-- 供应商 Tab 内容 -->
+                        <div class="tab-content hidden" id="vendorTabContent">
+                            <div class="flex justify-between items-center mb-2">
+                                <h4 class="text-sm font-medium">供应商信息</h4>
+                                <button class="bg-blue-500 text-white text-xs px-2 py-1 rounded" id="addNewVendorBtn">
+                                    <i class="fas fa-plus"></i> 新增供应商
+                                </button>
+                            </div>
+                            
+                            <!-- 供应商列表 -->
+                            <div class="space-y-2">
+                                <div class="border rounded p-2">
+                                    <div class="flex justify-between items-center">
+                                        <div>
+                                            <span class="font-medium text-sm">上海工具厂</span>
+                                            <span class="text-xs text-gray-500 ml-2">Mfr. Nr.: SH-FK001</span>
+                                        </div>
+                                        <span class="text-blue-600 text-sm">¥3.50</span>
+                                    </div>
+                                    <div class="flex justify-end mt-1">
+                                        <button class="text-xs text-blue-600 mr-2">编辑</button>
+                                        <button class="text-xs text-red-600">删除</button>
+                                    </div>
+                                </div>
+                                
+                                <div class="border rounded p-2">
+                                    <div class="flex justify-between items-center">
+                                        <div>
+                                            <span class="font-medium text-sm">深圳电子有限公司</span>
+                                            <span class="text-xs text-gray-500 ml-2">Mfr. Nr.: SZ-BK005</span>
+                                        </div>
+                                        <span class="text-blue-600 text-sm">¥3.80</span>
+                                    </div>
+                                    <div class="flex justify-end mt-1">
+                                        <button class="text-xs text-blue-600 mr-2">编辑</button>
+                                        <button class="text-xs text-red-600">删除</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- 客户 Tab 内容 -->
+                        <div class="tab-content hidden" id="customerTabContent">
+                            <div class="flex justify-between items-center mb-2">
+                                <h4 class="text-sm font-medium">客户信息</h4>
+                                <button class="bg-blue-500 text-white text-xs px-2 py-1 rounded" id="addNewCustomerBtn">
+                                    <i class="fas fa-plus"></i> 新增客户
+                                </button>
+                            </div>
+                            
+                            <!-- 客户列表 -->
+                            <div class="space-y-2">
+                                <div class="border rounded p-2">
+                                    <div class="flex justify-between items-center">
+                                        <div>
+                                            <span class="font-medium text-sm">北京工具贸易有限公司</span>
+                                            <span class="text-xs text-gray-500 ml-2">SKU: ABC-001</span>
+                                        </div>
+                                        <span class="text-green-600 text-sm">¥4.50</span>
+                                    </div>
+                                    <div class="flex justify-end mt-1">
+                                        <button class="text-xs text-blue-600 mr-2">编辑</button>
+                                        <button class="text-xs text-red-600">删除</button>
+                                    </div>
+                                </div>
+                                
+                                <div class="border rounded p-2">
+                                    <div class="flex justify-between items-center">
+                                        <div>
+                                            <span class="font-medium text-sm">上海工具贸易有限公司</span>
+                                            <span class="text-xs text-gray-500 ml-2">SKU: XYZ-002</span>
+                                        </div>
+                                        <span class="text-green-600 text-sm">¥4.80</span>
+                                    </div>
+                                    <div class="flex justify-end mt-1">
+                                        <button class="text-xs text-blue-600 mr-2">编辑</button>
+                                        <button class="text-xs text-red-600">删除</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 规格Tab内容 -->
+                    <div id="specTab" class="tab-content">
+                        <!-- 自定义SPEC字段 -->
+                        <div class="mb-4">
+                            <div class="flex justify-between items-center mb-2">
+                                <label class="block text-sm font-medium text-gray-700">规格字段</label>
+                                <button class="text-xs bg-green-100 text-green-800 px-2 py-1 rounded">添加字段</button>
+                            </div>
+                            
+                            <div class="space-y-2 max-h-40 overflow-y-auto">
+                                <!-- 已添加的规格字段 -->
+                                <div class="flex space-x-2">
+                                    <input type="text" class="w-1/3 border rounded px-2 py-1 text-sm" value="材质" readonly>
+                                    <input type="text" class="w-2/3 border rounded px-2 py-1 text-sm spec-field" value="铝合金+钢合金" id="materialInput" data-original="铝合金+钢合金">
+                                </div>
+                                <div class="flex space-x-2">
+                                    <input type="text" class="w-1/3 border rounded px-2 py-1 text-sm" value="颜色" readonly>
+                                    <input type="text" class="w-2/3 border rounded px-2 py-1 text-sm spec-field" value="灰色" id="colorInput" data-original="灰色">
+                                </div>
+                                <div class="flex space-x-2">
+                                    <input type="text" class="w-1/3 border rounded px-2 py-1 text-sm" value="外形尺寸" readonly>
+                                    <input type="text" class="w-2/3 border rounded px-2 py-1 text-sm spec-field" value="61*19*0.6mm" id="sizeInput" data-original="61*19*0.6mm">
+                                </div>
+                                <div class="flex space-x-2">
+                                    <input type="text" class="w-1/3 border rounded px-2 py-1 text-sm" value="刀片数量" readonly>
+                                    <input type="text" class="w-2/3 border rounded px-2 py-1 text-sm spec-field" value="1+5片" id="bladeQtyInput" data-original="1+5片">
+                                </div>
+                                <div class="flex space-x-2">
+                                    <input type="text" class="w-1/3 border rounded px-2 py-1 text-sm" value="包装方式" readonly>
+                                    <input type="text" class="w-2/3 border rounded px-2 py-1 text-sm spec-field" value="彩盒" id="packagingInput" data-original="彩盒">
+                                </div>
+                            </div>
+                            <!-- 规格变化提示 -->
+                            <div id="specChangeAlert" class="mt-2 hidden">
+                                <div class="bg-yellow-100 text-yellow-800 p-2 rounded flex justify-between items-center">
+                                    <span>规格已变化，是否保存为新产品？</span>
+                                    <div>
+                                        <button class="text-xs bg-green-500 text-white px-2 py-1 rounded mr-1" id="saveAsNewBtn">保存为新产品</button>
+                                        <button class="text-xs bg-gray-500 text-white px-2 py-1 rounded" id="cancelSpecChangeBtn">取消</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- 第2步：组套产品配置 -->
+                        <div class="mb-4 border rounded p-3" id="groupProductSection">
+                            <div class="flex justify-between items-center mb-2">
+                                <h4 class="text-sm font-medium text-gray-700 flex items-center">
+                                    <span class="bg-blue-500 text-white rounded-full w-5 h-5 flex items-center justify-center mr-2">2</span>
+                                    组套产品配置
+                                </h4>
+                                <div class="flex space-x-2">
+                                    <div class="relative inline-block">
+                                        <select class="border rounded px-2 py-1 text-xs" id="productTypeSelect">
+                                            <option value="single" selected>单件产品</option>
+                                            <option value="group">组套产品</option>
+                                        </select>
+                                    </div>
+                                    <button class="text-xs bg-blue-500 text-white px-2 py-1 rounded" id="addGroupProductBtn" disabled>添加产品</button>
+                                </div>
+                            </div>
+                            
+                            <!-- 单件产品提示 (默认显示) -->
+                            <div class="mb-2 text-xs text-gray-600" id="singleProductNotice">
+                                <div class="flex items-center p-2 bg-gray-100 rounded">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-500 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg>
+                                    <span>当前为单件产品，无需配置组套信息</span>
+                                </div>
+                            </div>
+                            
+                            <!-- 组套产品内容 (默认隐藏) -->
+                            <div class="hidden" id="groupProductContent">
+                                <!-- 产品选择区域 -->
+                                <div class="mb-3 border rounded p-2 bg-gray-50">
+                                    <div class="flex justify-between items-center mb-2">
+                                        <h5 class="text-xs font-medium">选择产品</h5>
+                                    </div>
+                                    <div class="grid grid-cols-2 gap-2">
+                                        <div>
+                                            <select class="w-full border rounded px-2 py-1 text-xs" id="groupProductSelect">
+                                                <option value="">选择要添加的产品...</option>
+                                                <option value="T001-A">主刀架 (带刀片) (T001-A)</option>
+                                                <option value="T001-B">备用刀片 5片装 (T001-B)</option>
+                                                <option value="T002-A">工具箱 (小型) (T002-A)</option>
+                                            </select>
+                                        </div>
+                                        <div class="flex justify-end">
+                                            <button class="text-xs bg-green-500 hover:bg-green-600 text-white px-2 py-1 rounded" id="confirmAddGroupProductBtn">
+                                                <i class="fas fa-plus mr-1"></i> 添加到组套
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- 组套产品列表 -->
+                                <div class="mb-2">
+                                    <table class="min-w-full divide-y divide-gray-200 border">
+                                        <thead class="bg-gray-50">
+                                            <tr>
+                                                <th scope="col" class="px-2 py-1 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">品名</th>
+                                                <th scope="col" class="px-2 py-1 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Mfr.Nr.</th>
+                                                <th scope="col" class="px-2 py-1 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">价格</th>
+                                                <th scope="col" class="px-2 py-1 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">数量</th>
+                                                <th scope="col" class="px-2 py-1 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">折扣</th>
+                                                <th scope="col" class="px-2 py-1 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">操作</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody class="bg-white divide-y divide-gray-200" id="groupProductTableBody">
+                                            <!-- 组套产品项 -->
+                                            <tr class="group-product-item" data-product-id="T001-A" data-original-data="T001-A,1,0">
+                                                <td class="px-2 py-1 text-xs">主刀架 (带刀片)</td>
+                                                <td class="px-2 py-1 text-xs">SH-FK001</td>
+                                                <td class="px-2 py-1 text-xs">¥3.50</td>
+                                                <td class="px-2 py-1 text-xs">
+                                                    <input type="number" class="w-12 border rounded px-1 py-0.5 text-xs group-product-quantity" value="1" min="1" data-original="1">
+                                                </td>
+                                                <td class="px-2 py-1 text-xs">
+                                                    <input type="number" class="w-12 border rounded px-1 py-0.5 text-xs group-product-discount" value="0" min="0" max="100" data-original="0">%
+                                                </td>
+                                                <td class="px-2 py-1 text-xs">
+                                                    <button class="text-xs bg-yellow-500 hover:bg-yellow-600 text-white px-1 py-0.5 rounded mr-1 edit-group-btn">
+                                                        <i class="fas fa-edit"></i>
+                                                    </button>
+                                                    <button class="text-xs bg-red-500 hover:bg-red-600 text-white px-1 py-0.5 rounded delete-group-btn">
+                                                        <i class="fas fa-trash-alt"></i>
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                            <tr class="group-product-item" data-product-id="T001-B" data-original-data="T001-B,5,0">
+                                                <td class="px-2 py-1 text-xs">备用刀片 5片装</td>
+                                                <td class="px-2 py-1 text-xs">SZ-BK005</td>
+                                                <td class="px-2 py-1 text-xs">¥1.20</td>
+                                                <td class="px-2 py-1 text-xs">
+                                                    <input type="number" class="w-12 border rounded px-1 py-0.5 text-xs group-product-quantity" value="5" min="1" data-original="5">
+                                                </td>
+                                                <td class="px-2 py-1 text-xs">
+                                                    <input type="number" class="w-12 border rounded px-1 py-0.5 text-xs group-product-discount" value="0" min="0" max="100" data-original="0">%
+                                                </td>
+                                                <td class="px-2 py-1 text-xs">
+                                                    <button class="text-xs bg-yellow-500 hover:bg-yellow-600 text-white px-1 py-0.5 rounded mr-1 edit-group-btn">
+                                                        <i class="fas fa-edit"></i>
+                                                    </button>
+                                                    <button class="text-xs bg-red-500 hover:bg-red-600 text-white px-1 py-0.5 rounded delete-group-btn">
+                                                        <i class="fas fa-trash-alt"></i>
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                                
+                                <!-- 组套产品变化提示 -->
+                                <div id="groupContentChangeAlert" class="mb-3 hidden">
+                                    <div class="bg-yellow-100 text-yellow-800 p-2 rounded flex justify-between items-center text-xs">
+                                        <span>组套产品内容已变化，这意味着将产生新产品。是否添加为新产品记录？</span>
+                                        <div class="flex space-x-1">
+                                            <button type="button" class="bg-green-500 text-white px-2 py-0.5 rounded" id="createNewGroupProductBtn">创建新产品</button>
+                                            <button type="button" class="bg-gray-500 text-white px-2 py-0.5 rounded" id="cancelGroupChangeBtn">取消</button>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="text-xs text-gray-500 mt-2">
+                                    <div class="flex items-center">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-blue-500 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                        </svg>
+                                        <span>组套产品中的各个子产品将作为单独的产品存在，可以单独配置供应商和客户信息</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- 添加产品模态框 -->
+                        <div id="addProductModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                            <div class="bg-white rounded-lg shadow-xl w-2/3 max-h-[90vh] overflow-y-auto">
+                                <div class="p-4 border-b flex justify-between items-center">
+                                    <h3 class="text-lg font-semibold">添加组套产品</h3>
+                                    <button id="closeAddProductModal" class="text-gray-500 hover:text-gray-700">×</button>
+                                </div>
+                                <div class="p-4">
+                                    <!-- 搜索区域 -->
+                                    <div class="mb-4">
+                                        <div class="flex space-x-2">
+                                            <input type="text" class="w-full border rounded px-3 py-2" placeholder="输入关键字搜索产品..." id="productSearchInput">
+                                            <button class="bg-blue-500 text-white px-4 py-2 rounded">搜索</button>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- 搜索结果 -->
+                                    <div class="mb-4 max-h-60 overflow-y-auto border rounded p-2">
+                                        <table class="w-full text-sm">
+                                            <thead>
+                                                <tr class="bg-gray-100">
+                                                    <th class="py-2 px-2 text-left">选择</th>
+                                                    <th class="py-2 px-2 text-left">产品编码</th>
+                                                    <th class="py-2 px-2 text-left">产品名称</th>
+                                                    <th class="py-2 px-2 text-left">供应商</th>
+                                                    <th class="py-2 px-2 text-left">Mfr. Nr.</th>
+                                                    <th class="py-2 px-2 text-left">工厂价格</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <tr class="border-b hover:bg-gray-50">
+                                                    <td class="py-2 px-2"><input type="radio" name="selectProduct"></td>
+                                                    <td class="py-2 px-2">T002</td>
+                                                    <td class="py-2 px-2">电动螺丝刀</td>
+                                                    <td class="py-2 px-2">上海工具厂</td>
+                                                    <td class="py-2 px-2">SH-DS001</td>
+                                                    <td class="py-2 px-2">¥45.00</td>
+                                                </tr>
+                                                <tr class="border-b hover:bg-gray-50">
+                                                    <td class="py-2 px-2"><input type="radio" name="selectProduct"></td>
+                                                    <td class="py-2 px-2">T003</td>
+                                                    <td class="py-2 px-2">手动钻头</td>
+                                                    <td class="py-2 px-2">深圳电子有限公司</td>
+                                                    <td class="py-2 px-2">SZ-HD001</td>
+                                                    <td class="py-2 px-2">¥12.50</td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                            
+                            <!-- 供应商列表 -->
+                            <div class="mb-2">
+                                <table class="min-w-full divide-y divide-gray-200 border">
+                                    <thead class="bg-gray-50">
+                                        <tr>
+                                            <th scope="col" class="px-2 py-1 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">供应商名称</th>
+                                            <th scope="col" class="px-2 py-1 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Mfr.Nr.</th>
+                                            <th scope="col" class="px-2 py-1 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">默认价格</th>
+                                            <th scope="col" class="px-2 py-1 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">历史报价</th>
+                                            <th scope="col" class="px-2 py-1 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">类型</th>
+                                            <th scope="col" class="px-2 py-1 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">操作</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="bg-white divide-y divide-gray-200" id="supplierTableBody">
+                                        <!-- 供应商项 -->
+                                        <tr class="supplier-item" data-supplier-id="1" data-original-data="SH-FK001,3.50,3.60,true">
+                                            <td class="px-2 py-1 text-xs">上海工具厂</td>
+                                            <td class="px-2 py-1 text-xs">
+                                                <input type="text" class="border rounded px-1 py-0.5 text-xs w-24 supplier-mfr" value="SH-FK001" data-original="SH-FK001">
+                                            </td>
+                                            <td class="px-2 py-1 text-xs">
+                                                <input type="number" class="border rounded px-1 py-0.5 text-xs w-16 supplier-price" value="3.50" step="0.01" data-original="3.50">元
+                                            </td>
+                                            <td class="px-2 py-1 text-xs">
+                                                <input type="number" class="border rounded px-1 py-0.5 text-xs w-16 supplier-history-price" value="3.60" step="0.01" data-original="3.60">元
+                                            </td>
+                                            <td class="px-2 py-1 text-xs">
+                                                <select class="text-xs bg-gray-100 px-1 rounded supplier-type">
+                                                    <option value="primary" selected>主要供应商</option>
+                                                    <option value="secondary">备选供应商</option>
+                                                </select>
+                                            </td>
+                                            <td class="px-2 py-1 text-xs">
+                                                <button class="text-xs bg-yellow-500 hover:bg-yellow-600 text-white px-1 py-0.5 rounded mr-1 edit-supplier-btn">
+                                                    <i class="fas fa-edit"></i>
+                                                </button>
+                                                <button class="text-xs bg-red-500 hover:bg-red-600 text-white px-1 py-0.5 rounded delete-supplier-btn">
+                                                    <i class="fas fa-trash-alt"></i>
+                                                </button>
+                                            </td>
+                                        </tr>
+                                        <tr class="supplier-item" data-supplier-id="2" data-original-data="SZ-BK005,3.80,3.95,false">
+                                            <td class="px-2 py-1 text-xs">深圳电子有限公司</td>
+                                            <td class="px-2 py-1 text-xs">
+                                                <input type="text" class="border rounded px-1 py-0.5 text-xs w-24 supplier-mfr" value="SZ-BK005" data-original="SZ-BK005">
+                                            </td>
+                                            <td class="px-2 py-1 text-xs">
+                                                <input type="number" class="border rounded px-1 py-0.5 text-xs w-16 supplier-price" value="3.80" step="0.01" data-original="3.80">元
+                                            </td>
+                                            <td class="px-2 py-1 text-xs">
+                                                <input type="number" class="border rounded px-1 py-0.5 text-xs w-16 supplier-history-price" value="3.95" step="0.01" data-original="3.95">元
+                                            </td>
+                                            <td class="px-2 py-1 text-xs">
+                                                <select class="text-xs bg-gray-100 px-1 rounded supplier-type">
+                                                    <option value="primary">主要供应商</option>
+                                                    <option value="secondary" selected>备选供应商</option>
+                                                </select>
+                                            </td>
+                                            <td class="px-2 py-1 text-xs">
+                                                <button class="text-xs bg-yellow-500 hover:bg-yellow-600 text-white px-1 py-0.5 rounded mr-1 edit-supplier-btn">
+                                                    <i class="fas fa-edit"></i>
+                                                </button>
+                                                <button class="text-xs bg-red-500 hover:bg-red-600 text-white px-1 py-0.5 rounded delete-supplier-btn">
+                                                    <i class="fas fa-trash-alt"></i>
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                            </div>
+                            
+                            <!-- 供应商变化提示 -->
+                            <div id="supplierChangeAlert" class="mt-3 hidden">
+                                <div class="bg-yellow-100 text-yellow-800 p-2 rounded flex justify-between items-center text-xs">
+                                    <span>供应商信息已变化。Mfr.Nr.或价格的变化不会创建新产品，但会更新当前产品的供应商信息。</span>
+                                    <button type="button" class="bg-gray-500 text-white px-2 py-0.5 rounded" id="dismissSupplierAlertBtn">知道了</button>
+                                </div>
+                            </div>
+                            
+                            <div class="text-xs text-gray-500 mt-2">
+                                <div class="flex items-center">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-blue-500 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg>
+                                    <span>可为同一产品配置多个供应商，以便于价格比较和采购决策</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- 第4步：客户信息配置 -->
+                        <div class="mb-4 border rounded p-3" id="customerSection">
+                            <div class="flex justify-between items-center mb-2">
+                                <h4 class="text-sm font-medium text-gray-700 flex items-center">
+                                    <span class="bg-blue-500 text-white rounded-full w-5 h-5 flex items-center justify-center mr-2">4</span>
+                                    客户信息配置
+                                </h4>
+                            </div>
+                            
+                            <!-- 客户选择区域 -->
+                            <div class="mb-3 border rounded p-2 bg-gray-50">
+                                <div class="flex justify-between items-center mb-2">
+                                    <h5 class="text-xs font-medium">选择客户</h5>
+                                </div>
+                                <div class="grid grid-cols-2 gap-2">
+                                    <div>
+                                        <select class="w-full border rounded px-2 py-1 text-xs" id="customerSelect">
+                                            <option value="">选择要添加的客户...</option>
+                                            <option value="1">北京工具贸易有限公司</option>
+                                            <option value="2">上海工具贸易有限公司</option>
+                                            <option value="3">广州五金贸易有限公司</option>
+                                        </select>
+                                    </div>
+                                    <div class="flex justify-end">
+                                        <button class="text-xs bg-green-500 hover:bg-green-600 text-white px-2 py-1 rounded" id="confirmAddCustomerBtn">
+                                            <i class="fas fa-plus mr-1"></i> 添加客户
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- 客户列表 -->
+                            <div class="mb-2">
+                                <table class="min-w-full divide-y divide-gray-200 border">
+                                    <thead class="bg-gray-50">
+                                        <tr>
+                                            <th scope="col" class="px-2 py-1 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">客户名称</th>
+                                            <th scope="col" class="px-2 py-1 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">SKU</th>
+                                            <th scope="col" class="px-2 py-1 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">默认价格</th>
+                                            <th scope="col" class="px-2 py-1 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">历史报价</th>
+                                            <th scope="col" class="px-2 py-1 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">类型</th>
+                                            <th scope="col" class="px-2 py-1 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">操作</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="bg-white divide-y divide-gray-200" id="customerTableBody">
+                                        <!-- 客户项 -->
+                                        <tr class="customer-item" data-customer-id="1" data-original-data="ABC-001,4.50,4.65,true">
+                                            <td class="px-2 py-1 text-xs">北京工具贸易有限公司</td>
+                                            <td class="px-2 py-1 text-xs">
+                                                <input type="text" class="border rounded px-1 py-0.5 text-xs w-24 customer-sku" value="ABC-001" data-original="ABC-001">
+                                            </td>
+                                            <td class="px-2 py-1 text-xs">
+                                                <input type="number" class="border rounded px-1 py-0.5 text-xs w-16 customer-price" value="4.50" step="0.01" data-original="4.50">元
+                                            </td>
+                                            <td class="px-2 py-1 text-xs">
+                                                <input type="number" class="border rounded px-1 py-0.5 text-xs w-16 customer-history-price" value="4.65" step="0.01" data-original="4.65">元
+                                            </td>
+                                            <td class="px-2 py-1 text-xs">
+                                                <select class="text-xs bg-gray-100 px-1 rounded customer-type">
+                                                    <option value="primary" selected>主要客户</option>
+                                                    <option value="secondary">潜在客户</option>
+                                                </select>
+                                            </td>
+                                            <td class="px-2 py-1 text-xs">
+                                                <button class="text-xs bg-yellow-500 hover:bg-yellow-600 text-white px-1 py-0.5 rounded mr-1 edit-customer-btn">
+                                                    <i class="fas fa-edit"></i>
+                                                </button>
+                                                <button class="text-xs bg-red-500 hover:bg-red-600 text-white px-1 py-0.5 rounded delete-customer-btn">
+                                                    <i class="fas fa-trash-alt"></i>
+                                                </button>
+                                            </td>
+                                        </tr>
+                                        <tr class="customer-item" data-customer-id="2" data-original-data="XYZ-002,4.80,4.95,false">
+                                            <td class="px-2 py-1 text-xs">上海工具贸易有限公司</td>
+                                            <td class="px-2 py-1 text-xs">
+                                                <input type="text" class="border rounded px-1 py-0.5 text-xs w-24 customer-sku" value="XYZ-002" data-original="XYZ-002">
+                                            </td>
+                                            <td class="px-2 py-1 text-xs">
+                                                <input type="number" class="border rounded px-1 py-0.5 text-xs w-16 customer-price" value="4.80" step="0.01" data-original="4.80">元
+                                            </td>
+                                            <td class="px-2 py-1 text-xs">
+                                                <input type="number" class="border rounded px-1 py-0.5 text-xs w-16 customer-history-price" value="4.95" step="0.01" data-original="4.95">元
+                                            </td>
+                                            <td class="px-2 py-1 text-xs">
+                                                <select class="text-xs bg-gray-100 px-1 rounded customer-type">
+                                                    <option value="primary">主要客户</option>
+                                                    <option value="secondary" selected>潜在客户</option>
+                                                </select>
+                                            </td>
+                                            <td class="px-2 py-1 text-xs">
+                                                <button class="text-xs bg-yellow-500 hover:bg-yellow-600 text-white px-1 py-0.5 rounded mr-1 edit-customer-btn">
+                                                    <i class="fas fa-edit"></i>
+                                                </button>
+                                                <button class="text-xs bg-red-500 hover:bg-red-600 text-white px-1 py-0.5 rounded delete-customer-btn">
+                                                    <i class="fas fa-trash-alt"></i>
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                            
+                            <!-- 客户变化提示 -->
+                            <div id="customerChangeAlert" class="mt-3 hidden">
+                                <div class="bg-yellow-100 text-yellow-800 p-2 rounded flex justify-between items-center text-xs">
+                                    <span>客户信息已变化。SKU或价格的变化不会创建新产品，但会更新当前产品的客户信息。</span>
+                                    <button type="button" class="bg-gray-500 text-white px-2 py-0.5 rounded" id="dismissCustomerAlertBtn">知道了</button>
+                                </div>
+                            </div>
+                            
+                            <div class="text-xs text-gray-500 mt-2">
+                                <div class="flex items-center">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-blue-500 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg>
+                                    <span>可为同一产品配置多个客户，以便于管理不同客户的产品信息</span>
+                                </div>
+                            </div>
+                            
+                            <div class="text-xs text-gray-500 mt-2">
+                                <div class="flex items-center">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-blue-500 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg>
+                                    <span>可为同一产品配置多个客户，包括各自的SKU和价格信息</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- 第5步：保存到产品管理 -->
+                        <div class="mb-4 border rounded p-3 bg-green-50" id="saveSection">
+                            <div class="flex justify-between items-center mb-2">
+                                <h4 class="text-sm font-medium text-gray-700 flex items-center">
+                                    <span class="bg-green-500 text-white rounded-full w-5 h-5 flex items-center justify-center mr-2">5</span>
+                                    保存到产品管理
+                                </h4>
+                            </div>
+                            
+                            <div class="mb-3 text-xs text-gray-600 p-2 bg-green-50 rounded">
+                                <div class="flex items-center">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-green-600 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg>
+                                    <span>完成上述所有配置后，点击下方按钮保存到产品管理系统。这将建立产品与供应商/客户产品的父子关系。</span>
+                                </div>
+                            </div>
+                            
+                            <!-- 配置摘要 -->
+                            <div class="mb-3 border rounded p-2 bg-white">
+                                <h5 class="text-sm font-medium text-gray-700 mb-2">配置摘要</h5>
+                                <div class="space-y-1 text-xs">
+                                    <div class="flex">
+                                        <div class="w-24 text-gray-500">产品编码：</div>
+                                        <div class="font-medium" id="summaryProductCode">P001-1234</div>
+                                    </div>
+                                    <div class="flex">
+                                        <div class="w-24 text-gray-500">产品名称：</div>
+                                        <div class="font-medium" id="summaryProductName">折叠美工刀</div>
+                                    </div>
+                                    <div class="flex">
+                                        <div class="w-24 text-gray-500">产品类型：</div>
+                                        <div class="font-medium" id="summaryProductType">单件产品</div>
+                                    </div>
+                                    <div class="flex">
+                                        <div class="w-24 text-gray-500">供应商数量：</div>
+                                        <div class="font-medium" id="summarySupplierCount">2</div>
+                                    </div>
+                                    <div class="flex">
+                                        <div class="w-24 text-gray-500">客户数量：</div>
+                                        <div class="font-medium" id="summaryCustomerCount">2</div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- 变更确认 -->
+                            <div id="configChangeConfirmation" class="mb-3 hidden">
+                                <div class="bg-yellow-100 text-yellow-800 p-2 rounded text-xs">
+                                    <div class="font-medium mb-1">警告：配置变更确认</div>
+                                    <p class="mb-2">您对产品规格字段进行了变更，这将创建一个新的产品记录。新产品编码将基于现有产品编码生成。</p>
+                                    <div class="flex justify-between items-center">
+                                        <div>
+                                            <label class="inline-flex items-center">
+                                                <input type="checkbox" class="form-checkbox h-3 w-3 text-blue-500" id="confirmChangeCheckbox">
+                                                <span class="ml-1">我确认创建新产品</span>
+                                            </label>
+                                        </div>
+                                        <div>
+                                            <button type="button" class="bg-red-500 text-white px-2 py-0.5 rounded text-xs" id="cancelChangeBtn">取消变更</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- 产品编码生成 -->
+                            <div id="newProductCodeSection" class="mb-3 hidden">
+                                <div class="bg-blue-50 p-2 rounded text-xs">
+                                    <div class="font-medium mb-1">新产品编码生成</div>
+                                    <div class="flex items-center mb-2">
+                                        <span class="w-24 text-gray-500">原产品编码：</span>
+                                        <span class="font-medium" id="originalProductCode">P001-1234</span>
+                                    </div>
+                                    <div class="flex items-center">
+                                        <span class="w-24 text-gray-500">新产品编码：</span>
+                                        <div class="flex items-center">
+                                            <span class="font-medium mr-1" id="baseProductCode">P001-1234-</span>
+                                            <input type="text" class="border rounded px-1 py-0.5 text-xs w-16" id="newProductCodeSuffix" placeholder="输入4位数字" maxlength="4" pattern="[0-9]{4}">
+                                        </div>
+                                    </div>
+                                    <div class="text-gray-500 mt-1">
+                                        <small>请输入一个4位数字作为新产品编码的后缀。这将与原产品编码组合生成新的唯一产品编码。</small>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="flex space-x-2">
+                                <button class="bg-gray-300 text-gray-700 px-3 py-1 rounded text-sm" id="cancelSaveBtn">取消</button>
+                                <button class="bg-green-500 text-white px-3 py-1 rounded text-sm flex items-center" id="saveToProductManagementBtn">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                                    </svg>
+                                    保存到产品管理
+                                </button>
+                            </div>
+                        </div>
+                                                        <li>普通用户: 无权限</li>
+                                                    </ul>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- 价格摘要显示 -->
+                                <div class="grid grid-cols-2 gap-3 text-xs">
+                                    <div class="bg-blue-50 p-2 rounded">
+
+                                    </div>
+                                    <div class="bg-green-50 p-2 rounded">
+
+                                    </div>
+                                </div>
+                                
+                                <!-- 隐藏的详细价格信息区域 -->
+                                <div class="price-section hidden mt-3">
+
+                                </div>
+                                
+                                <!-- 无权限提示 -->
+                                <div class="border rounded p-3 bg-yellow-50 hidden mt-3" id="noPricePermission">
+                                    <div class="flex items-center">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-yellow-500 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                        </svg>
+                                        <span class="text-sm text-yellow-700">您没有查看价格信息的权限。请联系管理员获取权限。</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 产品信息Tab内容 -->
+                    <div id="productInfoTab" class="tab-content hidden">
+                        <div class="space-y-3">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">产品编码</label>
+                                <input type="text" class="w-full border rounded px-2 py-1 text-sm" value="T001" readonly>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">产品分类</label>
+                                <input type="text" class="w-full border rounded px-2 py-1 text-sm" value="工具类" readonly>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">创建时间</label>
+                                <input type="text" class="w-full border rounded px-2 py-1 text-sm" value="2025-04-15" readonly>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">最后更新</label>
+                                <input type="text" class="w-full border rounded px-2 py-1 text-sm" value="2025-05-08" readonly>
+                            </div>
+                            <!-- 图片/文件上传字段 -->
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">产品文件</label>
+                                <div class="file-upload-container">
+                                    <div class="flex items-center justify-center">
+                                        <label for="productFileUpload" class="cursor-pointer">
+                                            <div class="text-center">
+                                                <i class="fas fa-cloud-upload-alt text-blue-500 text-2xl mb-2"></i>
+                                                <p class="text-sm text-gray-600">拖拽文件到此处或点击上传</p>
+                                                <p class="text-xs text-gray-500 mt-1">支持PDF, Word, Excel, 图片等格式</p>
+                                            </div>
+                                            <input id="productFileUpload" type="file" class="hidden" multiple>
+                                        </label>
+                                    </div>
+                                    <div class="preview-container" id="productFilePreview">
+                                        <!-- 预览将在这里显示 -->
+                                        <div class="preview-item">
+                                            <img src="assets/images/pdf-icon.png" alt="文件图标">
+                                            <div class="remove-btn">×</div>
+                                            <div class="text-xs mt-1 text-center text-gray-600 truncate">产品手册.pdf</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 历史报价Tab内容 -->
+                    <div id="historyPriceTab" class="tab-content hidden">
+                        <table class="w-full text-xs border">
+                            <thead>
+                                <tr class="bg-gray-100">
+                                    <th class="py-2 px-2 border">日期</th>
+                                    <th class="py-2 px-2 border">客户</th>
+                                    <th class="py-2 px-2 border">价格</th>
+                                    <th class="py-2 px-2 border">备注</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td class="py-2 px-2 border">2025-03-10</td>
+                                    <td class="py-2 px-2 border">美国ABC公司</td>
+                                    <td class="py-2 px-2 border">$5.50</td>
+                                    <td class="py-2 px-2 border">首次报价</td>
+                                </tr>
+                                <tr>
+                                    <td class="py-2 px-2 border">2025-04-15</td>
+                                    <td class="py-2 px-2 border">美国ABC公司</td>
+                                    <td class="py-2 px-2 border">$5.99</td>
+                                    <td class="py-2 px-2 border">原材料上涨</td>
+        </div>
+
+        <footer class="mt-12 text-center text-gray-600">
+            <p>产品数据库管理系统 (PDDB) &copy; 2025</p>
+        </footer>
+    </div>
+
+    <!-- JavaScript 文件 -->
+    <script src="config/supabase-config.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="assets/js/app.js"></script>
+    <script>
+        // Tab切换功能
+        document.querySelectorAll('[data-tab]').forEach(tab => {
+            tab.addEventListener('click', function(e) {
+                e.preventDefault();
+                
+                // 隐藏tab内容
+                document.querySelectorAll('.tab-content').forEach(content => {
+                    content.classList.add('hidden');
+                });
+                
+                // 移除tab的激活状态
+                document.querySelectorAll('[data-tab]').forEach(t => {
+                    t.classList.remove('text-blue-500', 'border-blue-500');
+                    t.classList.add('text-gray-500');
+                });
+                
+                // 显示当前tab内容
+                const tabId = this.getAttribute('data-tab');
+                document.getElementById(tabId).classList.remove('hidden');
+                
+                // 激活当前tab
+                this.classList.remove('text-gray-500');
+                this.classList.add('text-blue-500', 'border-blue-500');
+            });
+        });
+        
+        // 产品性质切换
+        document.getElementById('productTypeSelect').addEventListener('change', function() {
+            if (this.value === 'single') {
+                document.getElementById('groupProductSection').classList.add('hidden');
+                document.getElementById('singleProductVendorSection').classList.remove('hidden');
+        
+        // 规格字段值变化时同步更新左侧表格
+        document.getElementById('materialInput').addEventListener('input', function() {
+            document.getElementById('materialCell').textContent = this.value;
+        });
+        
+        document.getElementById('colorInput').addEventListener('input', function() {
+            document.getElementById('colorCell').textContent = this.value;
+        });
+        
+        document.getElementById('sizeInput').addEventListener('input', function() {
+            document.getElementById('sizeCell').textContent = this.value;
+        });
+        
+        document.getElementById('bladeQtyInput').addEventListener('input', function() {
+            document.getElementById('bladeQtyCell').textContent = this.value;
+        });
+        
+        document.getElementById('customerPriceInput').addEventListener('input', function() {
+            document.getElementById('priceCell').textContent = this.value;
+        });
+        
+        // 图片轮播功能
+        let currentImageIndex = 0;
+        const images = ['assets/images/placeholder.jpg', 'assets/images/placeholder2.jpg', 'assets/images/placeholder3.jpg'];
+        
+        document.getElementById('prevImageBtn').addEventListener('click', function() {
+            currentImageIndex = (currentImageIndex - 1 + images.length) % images.length;
+            updateMainImage();
+        });
+        
+        document.getElementById('nextImageBtn').addEventListener('click', function() {
+            currentImageIndex = (currentImageIndex + 1) % images.length;
+            updateMainImage();
+        });
+        
+        function updateMainImage() {
+            const mainImage = document.getElementById('mainProductImage');
+            mainImage.src = images[currentImageIndex];
+            mainImage.nextElementSibling.textContent = `${currentImageIndex + 1}/${images.length}`;
+            
+            // 更新缩略图选中状态
+            document.querySelectorAll('.flex.justify-center.space-x-2.mb-4 > div').forEach((thumb, index) => {
+                if (index === currentImageIndex) {
+                    thumb.classList.add('border-blue-500');
+                } else {
+                    thumb.classList.remove('border-blue-500');
+                }
+            });
+        }
+        
+        // 缩略图点击事件
+        document.querySelectorAll('.flex.justify-center.space-x-2.mb-4 > div').forEach((thumb, index) => {
+            thumb.addEventListener('click', function() {
+                currentImageIndex = index;
+                updateMainImage();
+            });
+        });
+        
+        // 价格显示/隐藏功能
+        document.getElementById('togglePriceBtn').addEventListener('click', function() {
+            const priceColumns = document.querySelectorAll('.price-column');
+            const isHidden = priceColumns[0].classList.contains('hidden');
+            
+            priceColumns.forEach(col => {
+                if (isHidden) {
+                    col.classList.remove('hidden');
+                    this.textContent = '隐藏价格';
+                } else {
+                    col.classList.add('hidden');
+                    this.textContent = '显示价格';
+                }
+            });
+        });
+        
+        // 规格Tab中价格显示/隐藏功能
+        document.getElementById('toggleSpecPriceBtn').addEventListener('click', function() {
+            const priceSection = document.querySelector('.price-section');
+            const isHidden = priceSection.classList.contains('hidden');
+            
+            if (isHidden) {
+                priceSection.classList.remove('hidden');
+                this.textContent = '隐藏价格';
+            } else {
+                priceSection.classList.add('hidden');
+                this.textContent = '显示价格';
+            }
+        });
+        
+        // 同步价格显示/隐藏状态
+        function syncPriceVisibility(show) {
+            const priceColumns = document.querySelectorAll('.price-column');
+            const priceSection = document.querySelector('.price-section');
+            const togglePriceBtn = document.getElementById('togglePriceBtn');
+            const toggleSpecPriceBtn = document.getElementById('toggleSpecPriceBtn');
+            
+            if (show) {
+                priceColumns.forEach(col => col.classList.remove('hidden'));
+                priceSection.classList.remove('hidden');
+                togglePriceBtn.textContent = '隐藏价格';
+                toggleSpecPriceBtn.textContent = '隐藏价格';
+            } else {
+                priceColumns.forEach(col => col.classList.add('hidden'));
+                priceSection.classList.add('hidden');
+                togglePriceBtn.textContent = '显示价格';
+                toggleSpecPriceBtn.textContent = '显示价格';
+            }
+        }
+        
+        // 检查规格字段是否变化
+        function checkSpecFieldChanges() {
+            const specFields = document.querySelectorAll('.spec-field');
+            let hasChanges = false;
+            
+            specFields.forEach(field => {
+                if (field.value !== field.getAttribute('data-original')) {
+                    hasChanges = true;
+                }
+            });
+            
+            if (hasChanges) {
+                document.getElementById('specChangeAlert').classList.remove('hidden');
+            } else {
+                document.getElementById('specChangeAlert').classList.add('hidden');
+            }
+            
+            return hasChanges;
+        }
+        
+        // 监听规格字段变化
+        document.querySelectorAll('.spec-field').forEach(field => {
+            field.addEventListener('input', function() {
+                checkSpecFieldChanges();
+            });
+        });
+        
+        // 取消规格变化
+        document.getElementById('cancelSpecChangeBtn').addEventListener('click', function() {
+            document.querySelectorAll('.spec-field').forEach(field => {
+                field.value = field.getAttribute('data-original');
+            });
+            document.getElementById('specChangeAlert').classList.add('hidden');
+            
+            // 同步更新左侧表格
+            document.getElementById('materialCell').textContent = document.getElementById('materialInput').value;
+            document.getElementById('colorCell').textContent = document.getElementById('colorInput').value;
+            document.getElementById('sizeCell').textContent = document.getElementById('sizeInput').value;
+            document.getElementById('bladeQtyCell').textContent = document.getElementById('bladeQtyInput').value;
+        });
+        
+        // 保存为新产品
+        document.getElementById('saveAsNewBtn').addEventListener('click', function() {
+            // 这里应该有保存新产品的API调用
+            alert('新产品已创建，请添加供应商');
+            document.getElementById('specChangeAlert').classList.add('hidden');
+            
+            // 更新原始值为当前值
+            document.querySelectorAll('.spec-field').forEach(field => {
+                field.setAttribute('data-original', field.value);
+            });
+        });
+        
+        // 复制为新产品按钮
+        document.getElementById('copyProductBtn').addEventListener('click', function() {
+            // 这里应该有复制产品的API调用
+            alert('产品已复制，请编辑新产品信息');
+        });
+        
+        // 添加供应商
+        document.getElementById('addVendorBtn').addEventListener('click', function() {
+            const vendorList = document.getElementById('vendorList');
+            const vendorItem = document.createElement('div');
+            vendorItem.className = 'flex flex-col space-y-2 vendor-item border rounded p-2';
+            vendorItem.innerHTML = `
+                <div class="flex space-x-2 items-center">
+                    <select class="w-1/2 border rounded px-2 py-1 text-sm vendor-select">
+                        <option value="">选择供应商...</option>
+                        <option>上海工具厂</option>
+                        <option>深圳电子有限公司</option>
+                    </select>
+                    <input type="text" class="w-1/3 border rounded px-2 py-1 text-sm" placeholder="供应商货号">
+                    <button class="text-xs text-red-500 vendor-remove-btn">删除</button>
+                </div>
+                <div>
+                    <label class="block text-xs text-gray-600 mb-1">供应商产品说明</label>
+                    <textarea class="w-full border rounded px-2 py-1 text-sm" rows="2" placeholder="输入供应商产品说明..."></textarea>
+                </div>
+            `;
+            vendorList.appendChild(vendorItem);
+            
+            // 为新添加的删除按钮绑定事件
+            vendorItem.querySelector('.vendor-remove-btn').addEventListener('click', function() {
+                vendorList.removeChild(vendorItem);
+            });
+        });
+        
+        // 添加客户
+        document.getElementById('addCustomerBtn').addEventListener('click', function() {
+            const customerList = document.getElementById('customerList');
+            const customerItem = document.createElement('div');
+            customerItem.className = 'flex flex-col space-y-2 customer-item border rounded p-2';
+            customerItem.innerHTML = `
+                <div class="flex space-x-2 items-center">
+                    <select class="w-1/2 border rounded px-2 py-1 text-sm customer-select">
+                        <option value="">选择客户...</option>
+                        <option>北京五金工具有限公司</option>
+                        <option>广州建材贸易有限公司</option>
+                        <option>德国XYZ有限公司</option>
+                    </select>
+                    <button class="text-xs text-red-500 customer-remove-btn">删除</button>
+                </div>
+                <div>
+                    <label class="block text-xs text-gray-600 mb-1">客户产品说明</label>
+                    <textarea class="w-full border rounded px-2 py-1 text-sm" rows="2" placeholder="输入客户产品说明..."></textarea>
+                </div>
+            `;
+            customerList.appendChild(customerItem);
+            
+            // 为新添加的删除按钮绑定事件
+            customerItem.querySelector('.customer-remove-btn').addEventListener('click', function() {
+                customerList.removeChild(customerItem);
+            });
+        });
+        
+        // 为现有的客户删除按钮绑定事件
+        document.querySelectorAll('.customer-remove-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const customerItem = this.closest('.customer-item');
+                customerItem.parentNode.removeChild(customerItem);
+            });
+        });
+    </script>
+    
+    <!-- 引入产品管理Tab功能脚本 -->
+    <script src="assets/js/index-tabs.js"></script>
+</body>
+</html>

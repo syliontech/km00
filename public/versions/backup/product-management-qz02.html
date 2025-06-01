@@ -1,0 +1,554 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>产品管理系统 - 产品管理</title>
+    <!-- Tailwind CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet">
+    <!-- 自定义样式 -->
+    <style>
+        .file-upload-container {
+            border: 2px dashed #cbd5e0;
+            border-radius: 0.5rem;
+            padding: 1.5rem;
+            text-align: center;
+            transition: all 0.3s;
+        }
+        .file-upload-container:hover {
+            border-color: #4299e1;
+        }
+        .preview-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-top: 1rem;
+        }
+        .preview-item {
+            position: relative;
+            width: 100px;
+            height: 100px;
+            border-radius: 0.25rem;
+            overflow: hidden;
+        }
+        .preview-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .preview-item .remove-btn {
+            position: absolute;
+            top: 0.25rem;
+            right: 0.25rem;
+            background: rgba(0, 0, 0, 0.5);
+            color: white;
+            width: 1.5rem;
+            height: 1.5rem;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body class="bg-gray-100">
+    <!-- 顶部导航栏 -->
+    <nav class="bg-white shadow-sm">
+        <div class="container mx-auto px-2 py-2">
+            <div class="flex justify-between items-center">
+                <div class="flex items-center">
+                    <img src="assets/images/placeholder.jpg" alt="Logo" class="h-8 mr-2">
+                    <span class="text-lg font-semibold text-gray-800">产品管理系统</span>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <a href="index.html" class="text-gray-600 hover:text-gray-800">
+                        <i class="fas fa-home"></i> 首页
+                    </a>
+                    <a href="#" class="text-gray-600 hover:text-gray-800">
+                        <i class="fas fa-user-circle"></i> 用户
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 主容器 -->
+    <div class="container mx-auto px-2 py-3">
+        <!-- 顶部标题和操作区 -->
+        <div class="flex justify-between items-center mb-3">
+            <h1 class="text-xl font-bold text-gray-800">产品管理</h1>
+            <div class="flex space-x-1">
+                <button id="addProductBtn" class="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-sm">
+                    <i class="fas fa-plus mr-1"></i> 添加新产品
+                </button>
+                <button id="copyProductBtn" class="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded text-sm">
+                    <i class="fas fa-copy mr-1"></i> 复制为新产品
+                </button>
+                <button id="editProductBtn" class="bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-1 rounded text-sm">
+                    <i class="fas fa-edit mr-1"></i> 编辑
+                </button>
+                <button id="deleteProductBtn" class="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-sm">
+                    <i class="fas fa-trash-alt mr-1"></i> 删除
+                </button>
+            </div>
+        </div>
+        
+        <!-- 筛选区 -->
+        <div class="bg-white rounded-lg shadow-sm p-2 mb-2">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-2">
+                <!-- 分类筛选 -->
+                <div>
+                    <label class="block text-xs font-medium text-gray-700 mb-1">产品分类</label>
+                    <div class="flex">
+                        <select id="category_filter" class="w-full border rounded-l px-2 py-1 text-sm">
+                            <option value="">所有分类</option>
+                            <option value="A001">电子产品</option>
+                            <option value="B002">家居用品</option>
+                            <option value="C003">办公用品</option>
+                        </select>
+                        <button id="filterCategoryBtn" class="bg-blue-500 text-white px-2 py-1 rounded-r">
+                            <i class="fas fa-filter"></i>
+                        </button>
+                    </div>
+                </div>
+                <!-- 产品名称搜索 -->
+                <div>
+                    <label class="block text-xs font-medium text-gray-700 mb-1">产品名称</label>
+                    <div class="flex">
+                        <input type="text" id="product_name_filter" class="w-full border rounded-l px-2 py-1 text-sm" placeholder="输入产品名称关键词">
+                        <button id="filterNameBtn" class="bg-blue-500 text-white px-2 py-1 rounded-r">
+                            <i class="fas fa-search"></i>
+                        </button>
+                    </div>
+                </div>
+                <!-- 产品编码搜索 -->
+                <div>
+                    <label class="block text-xs font-medium text-gray-700 mb-1">产品编码</label>
+                    <div class="flex">
+                        <input type="text" id="product_code_filter" class="w-full border rounded-l px-2 py-1 text-sm" placeholder="输入产品编码">
+                        <button id="filterCodeBtn" class="bg-blue-500 text-white px-2 py-1 rounded-r">
+                            <i class="fas fa-search"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 下部主内容区：产品展示（核心字段） -->
+        <div class="bg-white rounded-lg shadow-md p-2">
+            <div id="productListContainer" class="w-full">
+                <!-- 产品数据将通过JavaScript动态加载 -->
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th scope="col" class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">产品编码</th>
+                            <th scope="col" class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">产品名称</th>
+                            <th scope="col" class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">分类</th>
+                            <th scope="col" class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">属性</th>
+                            <th scope="col" class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">关联供应商数</th>
+                            <th scope="col" class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">关联客户数</th>
+                            <th scope="col" class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">操作</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        <!-- 示例数据 -->
+                        <tr>
+                            <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900">A001-01</td>
+                            <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900">折叠美工刀</td>
+                            <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900">电子产品</td>
+                            <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900">单件</td>
+                            <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900">2</td>
+                            <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900">3</td>
+                            <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900">
+                                <button class="text-blue-500 hover:text-blue-700 mr-2"><i class="fas fa-edit"></i></button>
+                                <button class="text-green-500 hover:text-green-700 mr-2"><i class="fas fa-copy"></i></button>
+                                <button class="text-red-500 hover:text-red-700"><i class="fas fa-trash-alt"></i></button>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900">B002-05</td>
+                            <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900">多功能扳手</td>
+                            <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900">家居用品</td>
+                            <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900">组套</td>
+                            <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900">1</td>
+                            <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900">2</td>
+                            <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900">
+                                <button class="text-blue-500 hover:text-blue-700 mr-2"><i class="fas fa-edit"></i></button>
+                                <button class="text-green-500 hover:text-green-700 mr-2"><i class="fas fa-copy"></i></button>
+                                <button class="text-red-500 hover:text-red-700"><i class="fas fa-trash-alt"></i></button>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- 产品添加/编辑模态框 -->
+        <div id="productFormModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 overflow-y-auto">
+            <div class="bg-white rounded-lg shadow-xl w-full md:w-4/5 lg:w-2/3 max-h-[80vh] overflow-y-auto">
+                <div class="p-2 border-b flex justify-between items-center">
+                    <h3 class="text-lg font-semibold" id="modalTitle">新建产品</h3>
+                    <button id="closeModalBtn" class="text-gray-500 hover:text-gray-700">×</button>
+                </div>
+                <div class="p-2">
+                    <form id="productForm" class="space-y-2">
+                        <div class="grid grid-cols-2 gap-2">
+                            <!-- 产品分类 -->
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">产品分类</label>
+                                <div class="flex items-center">
+                                    <select id="productCategory" class="w-full border rounded px-2 py-1">
+                                        <option value="">选择分类</option>
+                                        <option value="A001">电子产品</option>
+                                        <option value="B002">家居用品</option>
+                                        <option value="C003">办公用品</option>
+                                    </select>
+                                    <button type="button" id="newCategoryBtn" class="ml-1 text-blue-500 hover:text-blue-700">
+                                        <i class="fas fa-plus-circle"></i>
+                                    </button>
+                                </div>
+                                <div id="newCategoryForm" class="mt-2 hidden">
+                                    <input type="text" id="newCategoryName" class="w-full border rounded px-2 py-1 mb-1" placeholder="输入新分类名称">
+                                    <button type="button" id="saveCategoryBtn" class="bg-blue-500 text-white px-2 py-1 rounded text-xs">保存分类</button>
+                                    <p id="tempCategoryNotice" class="text-xs text-red-500 mt-1 hidden">您无权限创建正式分类，将创建临时分类</p>
+                                </div>
+                            </div>
+                            
+                            <!-- 产品编码 -->
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">产品编码 (Item Nr.)</label>
+                                <input type="text" id="productCode" class="w-full border rounded px-2 py-1 bg-gray-100" readonly>
+                                <p class="text-xs text-gray-500 mt-1">自动生成，格式：分类编码-随机码2位</p>
+                            </div>
+                            
+                            <!-- 英文品名 -->
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">英文品名</label>
+                                <input type="text" id="productNameEn" class="w-full border rounded px-2 py-1" placeholder="输入英文产品名称">
+                            </div>
+                            
+                            <!-- 中文品名 -->
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">中文品名</label>
+                                <input type="text" id="productNameCn" class="w-full border rounded px-2 py-1" placeholder="输入中文产品名称">
+                            </div>
+                            
+                            <!-- 英文说明 -->
+                            <div class="col-span-2">
+                                <label class="block text-sm font-medium text-gray-700 mb-1">英文说明</label>
+                                <textarea id="productDescEn" class="w-full border rounded px-2 py-1" rows="3" placeholder="输入英文产品说明"></textarea>
+                            </div>
+                            
+                            <!-- 中文说明 -->
+                            <div class="col-span-2">
+                                <label class="block text-sm font-medium text-gray-700 mb-1">中文说明</label>
+                                <textarea id="productDescCn" class="w-full border rounded px-2 py-1" rows="3" placeholder="输入中文产品说明"></textarea>
+                            </div>
+                            
+                            <!-- 产品属性与单位 -->
+                            <div class="col-span-2 grid grid-cols-3 gap-2 mt-2">
+                                <!-- 产品属性 -->
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">产品属性</label>
+                                    <div class="flex space-x-1">
+                                        <label class="inline-flex items-center">
+                                            <input type="radio" name="productType" id="productType" value="single" class="form-radio" checked>
+                                            <span class="ml-2 text-sm">单件</span>
+                                        </label>
+                                        <label class="inline-flex items-center ml-6">
+                                            <input type="radio" name="productType" value="group" class="form-radio">
+                                            <span class="ml-2 text-sm">组套</span>
+                                        </label>
+                                    </div>
+                                    <p class="text-xs text-gray-500 mt-1">选择组套时单位为"套/set"，选择单件时单位为"件/pc"</p>
+                                </div>
+                                
+                                <!-- 上传产品图片 -->
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">产品图片（最多3张）</label>
+                                    <div class="file-upload-container p-2 h-20" id="imageUploadContainer">
+                                        <div class="flex items-center">
+                                            <i class="fas fa-cloud-upload-alt text-blue-500 mr-2"></i>
+                                            <div class="flex-1">
+                                                <div class="flex items-center">
+                                                    <p class="text-xs text-gray-600 mr-2">拖放图片或</p>
+                                                    <label class="cursor-pointer bg-blue-500 hover:bg-blue-600 text-white text-xs py-1 px-2 rounded">
+                                                        <span>选择图片</span>
+                                                        <input type="file" class="hidden" id="productImageUpload" accept="image/*" multiple>
+                                                    </label>
+                                                </div>
+                                                <p class="text-xs text-gray-500 mt-1">支持JPG/PNG，每张不超过2MB</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="preview-container" id="imagePreviewContainer"></div>
+                                </div>
+                                
+                                <!-- 上传产品资料 -->
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">产品资料文档</label>
+                                    <div class="file-upload-container p-2 h-20" id="docUploadContainer">
+                                        <div class="flex items-center">
+                                            <i class="fas fa-file-upload text-blue-500 mr-2"></i>
+                                            <div class="flex-1">
+                                                <div class="flex items-center">
+                                                    <p class="text-xs text-gray-600 mr-2">拖放文档或</p>
+                                                    <label class="cursor-pointer bg-blue-500 hover:bg-blue-600 text-white text-xs py-1 px-2 rounded">
+                                                        <span>选择文档</span>
+                                                        <input type="file" class="hidden" id="productDocUpload" accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx">
+                                                    </label>
+                                                </div>
+                                                <p class="text-xs text-gray-500 mt-1">支持PDF/Word/Excel/PPT，不超过10MB</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="mt-2" id="docPreviewContainer"></div>
+                                </div>
+                            </div>
+                            
+                            <!-- 产品详细信息（引用自index.html） -->
+                            <div class="col-span-2 mt-4">
+                                <div class="flex justify-between items-center mb-2">
+                                    <span class="text-sm font-medium">产品详细信息</span>
+                                    <div class="flex space-x-2">
+                                        <button type="button" id="showVendorBtn" class="px-2 py-1 bg-blue-500 text-white text-xs rounded">
+                                            <i class="fas fa-industry mr-1"></i>供应商
+                                        </button>
+                                        <button type="button" id="showCustomerBtn" class="px-2 py-1 bg-gray-300 text-gray-700 text-xs rounded">
+                                            <i class="fas fa-user-tie mr-1"></i>客户
+                                        </button>
+                                        <button class="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded" id="togglePriceBtn">显示价格</button>
+                                    </div>
+                                </div>
+                                
+                                <!-- 产品详细信息表格 - 从客户/供应商产品获取数据 -->
+                                <table class="w-full text-xs border-t mt-2">
+                                    <tr class="bg-gray-50">
+                                        <td class="py-1 px-2 border">产品编码</td>
+                                        <td class="py-1 px-2 border" id="codeCell">T001</td>
+                                        <td class="py-1 px-2 border">材质</td>
+                                        <td class="py-1 px-2 border" id="materialCell">铝合金+钢合金</td>
+                                        <td class="py-1 px-2 border">颜色</td>
+                                        <td class="py-1 px-2 border" id="colorCell">灰色</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="py-1 px-2 border">外形尺寸</td>
+                                        <td class="py-1 px-2 border" id="sizeCell">61*19*0.6mm</td>
+                                        <td class="py-1 px-2 border price-column hidden">报价</td>
+                                        <td class="py-1 px-2 border price-column hidden" id="priceCell">$5.99</td>
+                                        <td class="py-1 px-2 border">刀片数量</td>
+                                        <td class="py-1 px-2 border" id="bladeQtyCell">1+5片</td>
+                                    </tr>
+                                </table>
+                                
+                                <!-- 供应商信息区域 -->
+                                <div id="vendorInfoArea" class="mt-3">
+                                    <h5 class="text-sm font-medium">供应商信息</h5>
+                                    <div class="border rounded p-2 mt-1">
+                                        <p class="text-xs text-gray-500 mb-2">
+                                            此产品关联的供应商信息由客户/供应商产品管理模块维护，在此仅作展示。
+                                        </p>
+                                        <div id="vendorInfoList" class="text-xs">
+                                            <div class="flex justify-between items-center p-1 border-b">
+                                                <div>
+                                                    <span class="font-medium">上海工具厂</span>
+                                                    <span class="text-gray-500 ml-2">Mfr. Nr.: SH-FK001</span>
+                                                </div>
+                                                <span class="text-blue-600">¥3.50</span>
+                                            </div>
+                                            <div class="flex justify-between items-center p-1">
+                                                <div>
+                                                    <span class="font-medium">深圳电子有限公司</span>
+                                                    <span class="text-gray-500 ml-2">Mfr. Nr.: SZ-BK005</span>
+                                                </div>
+                                                <span class="text-blue-600">¥3.80</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- 客户信息区域 -->
+                                <div id="customerInfoArea" class="mt-3 hidden">
+                                    <h5 class="text-sm font-medium">客户信息</h5>
+                                    <div class="border rounded p-2 mt-1">
+                                        <p class="text-xs text-gray-500 mb-2">
+                                            此产品关联的客户信息由客户/供应商产品管理模块维护，在此仅作展示。
+                                        </p>
+                                        <div id="customerInfoList" class="text-xs">
+                                            <div class="flex justify-between items-center p-1 border-b">
+                                                <div>
+                                                    <span class="font-medium">北京工具贸易有限公司</span>
+                                                    <span class="text-gray-500 ml-2">SKU: ABC-001</span>
+                                                </div>
+                                                <span class="text-green-600">¥4.50</span>
+                                            </div>
+                                            <div class="flex justify-between items-center p-1">
+                                                <div>
+                                                    <span class="font-medium">上海工具贸易有限公司</span>
+                                                    <span class="text-gray-500 ml-2">SKU: XYZ-002</span>
+                                                </div>
+                                                <span class="text-green-600">¥4.80</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <p class="text-xs text-gray-500 mt-2">
+                                    <i class="fas fa-info-circle mr-1"></i>
+                                    供应商和客户信息由客户/供应商产品管理模块维护，按钮显示由权限控制。
+                                </p>
+                            </div>
+                        
+                        <!-- 表单底部按钮 -->
+                        <div class="flex justify-end space-x-2 mt-4">
+                            <button type="button" id="cancelFormBtn" class="px-4 py-2 border border-gray-300 rounded text-gray-700 hover:bg-gray-100">取消</button>
+                            <button type="submit" class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600">保存</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript -->
+    <script>
+        // 打开模态框
+        document.getElementById('addProductBtn').addEventListener('click', function() {
+            document.getElementById('modalTitle').textContent = '新建产品';
+            document.getElementById('productFormModal').classList.remove('hidden');
+        });
+        
+        // 关闭模态框
+        document.getElementById('closeModalBtn').addEventListener('click', function() {
+            document.getElementById('productFormModal').classList.add('hidden');
+        });
+        
+        document.getElementById('cancelFormBtn').addEventListener('click', function() {
+            document.getElementById('productFormModal').classList.add('hidden');
+        });
+        
+        // 新建分类表单显示/隐藏
+        document.getElementById('newCategoryBtn').addEventListener('click', function() {
+            document.getElementById('newCategoryForm').classList.toggle('hidden');
+        });
+        
+        // 切换供应商/客户信息显示
+        document.getElementById('showVendorBtn').addEventListener('click', function() {
+            document.getElementById('vendorInfoArea').classList.remove('hidden');
+            document.getElementById('customerInfoArea').classList.add('hidden');
+            document.getElementById('showVendorBtn').classList.remove('bg-gray-300', 'text-gray-700');
+            document.getElementById('showVendorBtn').classList.add('bg-blue-500', 'text-white');
+            document.getElementById('showCustomerBtn').classList.remove('bg-blue-500', 'text-white');
+            document.getElementById('showCustomerBtn').classList.add('bg-gray-300', 'text-gray-700');
+        });
+        
+        document.getElementById('showCustomerBtn').addEventListener('click', function() {
+            document.getElementById('vendorInfoArea').classList.add('hidden');
+            document.getElementById('customerInfoArea').classList.remove('hidden');
+            document.getElementById('showVendorBtn').classList.remove('bg-blue-500', 'text-white');
+            document.getElementById('showVendorBtn').classList.add('bg-gray-300', 'text-gray-700');
+            document.getElementById('showCustomerBtn').classList.remove('bg-gray-300', 'text-gray-700');
+            document.getElementById('showCustomerBtn').classList.add('bg-blue-500', 'text-white');
+        });
+        
+        // 显示/隐藏价格
+        document.getElementById('togglePriceBtn').addEventListener('click', function() {
+            const priceColumns = document.querySelectorAll('.price-column');
+            priceColumns.forEach(col => {
+                col.classList.toggle('hidden');
+            });
+            
+            this.textContent = this.textContent === '显示价格' ? '隐藏价格' : '显示价格';
+        });
+        
+        // 图片上传预览
+        document.getElementById('productImageUpload').addEventListener('change', function(e) {
+            const files = e.target.files;
+            const previewContainer = document.getElementById('imagePreviewContainer');
+            
+            // 限制最多上传3张图片
+            if (previewContainer.children.length + files.length > 3) {
+                alert('最多只能上传3张图片');
+                return;
+            }
+            
+            for (let i = 0; i < files.length; i++) {
+                const file = files[i];
+                if (!file.type.match('image.*')) {
+                    continue;
+                }
+                
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const previewItem = document.createElement('div');
+                    previewItem.className = 'preview-item';
+                    previewItem.innerHTML = `
+                        <img src="${e.target.result}" alt="预览图片">
+                        <div class="remove-btn"><i class="fas fa-times"></i></div>
+                    `;
+                    previewContainer.appendChild(previewItem);
+                    
+                    // 为删除按钮绑定事件
+                    previewItem.querySelector('.remove-btn').addEventListener('click', function() {
+                        previewContainer.removeChild(previewItem);
+                    });
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+        
+        // 文档上传预览
+        document.getElementById('productDocUpload').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            
+            const previewContainer = document.getElementById('docPreviewContainer');
+            previewContainer.innerHTML = `
+                <div class="flex items-center justify-between border rounded p-2">
+                    <div class="flex items-center">
+                        <i class="fas fa-file-alt text-blue-500 mr-2"></i>
+                        <span class="text-sm">${file.name}</span>
+                    </div>
+                    <button class="text-red-500 hover:text-red-700" id="removeDocBtn">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            `;
+            
+            // 为删除按钮绑定事件
+            document.getElementById('removeDocBtn').addEventListener('click', function() {
+                previewContainer.innerHTML = '';
+                document.getElementById('productDocUpload').value = '';
+            });
+        });
+        
+        // 编辑产品按钮
+        document.getElementById('editProductBtn').addEventListener('click', function() {
+            // 这里应该先检查是否有选中的产品
+            document.getElementById('modalTitle').textContent = '编辑产品';
+            document.getElementById('productFormModal').classList.remove('hidden');
+            // 在实际应用中，这里应该加载选中产品的数据
+        });
+        
+        // 复制为新产品按钮
+        document.getElementById('copyProductBtn').addEventListener('click', function() {
+            // 这里应该先检查是否有选中的产品
+            document.getElementById('modalTitle').textContent = '复制为新产品';
+            document.getElementById('productFormModal').classList.remove('hidden');
+            // 在实际应用中，这里应该加载选中产品的数据，并清除供应商/客户数据和上传数据
+        });
+        
+        // 删除产品按钮
+        document.getElementById('deleteProductBtn').addEventListener('click', function() {
+            // 这里应该先检查是否有选中的产品
+            if (confirm('确定要删除选中的产品吗？此操作将同时删除所有关联的供应商/客户产品信息和上传文件。')) {
+                // 在实际应用中，这里应该执行删除操作
+                alert('产品已删除');
+            }
+        });
+    </script>
+</body>
+</html>

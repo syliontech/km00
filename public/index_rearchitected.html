@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>产品管理系统 - 新架构首页</title>
+    <!-- Tailwind CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet">
+    <!-- Custom Styles (optional, if you have one) -->
+    <!-- <link href="assets/css/styles.css" rel="stylesheet"> -->
+    <style>
+        /* Basic styling for visual separation and clarity */
+        .functional-block, .panel {
+            border: 1px solid #e2e8f0; /* gray-300 */
+            padding: 1rem; /* p-4 */
+            margin-bottom: 1.5rem; /* mb-6 */
+            border-radius: 0.5rem; /* rounded-lg */
+            background-color: white;
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+        }
+        .tab-content.hidden {
+            display: none;
+        }
+        .tab-button.active {
+            border-color: #3b82f6; /* blue-500 */
+            color: #2563eb; /* blue-600 */
+        }
+    </style>
+</head>
+<body class="bg-gray-100 p-4">
+    <div class="container mx-auto">
+        <h1 class="text-3xl font-bold text-center text-gray-800 mb-8">产品管理系统 - 首页 (新架构)</h1>
+
+        <!-- Upper Functional Blocks Area -->
+        <div id="upperFunctionalBlocks" class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <!-- Block 1: Product Category Search -->
+            <div class="functional-block">
+                <h2 class="text-xl font-semibold text-gray-700 mb-3"><i class="fas fa-sitemap mr-2"></i>产品分类搜索与选择</h2>
+                <div class="flex items-center mb-2">
+                    <button id="categoryBackBtn" class="p-2 mr-2 border rounded text-gray-600 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed">
+                        <i class="fas fa-arrow-left"></i>
+                    </button>
+                    <input type="text" id="categorySearchInput" placeholder="搜索当前级别分类..." class="flex-grow p-2 border rounded">
+                </div>
+                <div id="categoryListContainer" class="h-48 overflow-y-auto border rounded p-1 mb-2 bg-white">
+                    <!-- Categories will be loaded here by JavaScript -->
+                    <p class="text-sm text-gray-400 text-center py-4">分类列表加载中...</p>
+                </div>
+                <div class="min-h-[50px] p-2 border rounded bg-gray-50 mb-2" id="selectedCategoriesDisplay">
+                    <p class="text-center text-gray-500">选择的分类将在此显示...</p>
+                </div>
+                <a href="category-management.html" class="block w-full bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded text-center">
+                    <i class="fas fa-external-link-alt mr-1"></i> 前往分类管理
+                </a>
+                <p class="text-xs text-gray-500 mt-1">支持多选，可跳转至分类管理页面进行编辑/新建。</p>
+            </div>
+
+            <!-- Block 2: Product Search -->
+            <div class="functional-block">
+                <h2 class="text-xl font-semibold text-gray-700 mb-3"><i class="fas fa-box-open mr-2"></i>产品搜索与选择</h2>
+                <input type="text" placeholder="搜索产品名称/货号..." class="w-full p-2 border rounded mb-2">
+                <button class="w-full bg-green-500 hover:bg-green-600 text-white py-2 px-4 rounded">
+                    <i class="fas fa-external-link-alt mr-1"></i> 前往产品管理
+                </button>
+                <p class="text-xs text-gray-500 mt-1">可跳转至产品管理页面进行编辑/新建。</p>
+            </div>
+
+            <!-- Block 3: Customer/Supplier Product Search -->
+            <div class="functional-block">
+                <h2 class="text-xl font-semibold text-gray-700 mb-3"><i class="fas fa-users mr-2"></i>客户/供应商产品搜索</h2>
+                <input type="text" placeholder="搜索客户/供应商名称..." class="w-full p-2 border rounded mb-2">
+                <div class="mb-2">
+                    <label class="inline-flex items-center mr-4">
+                        <input type="radio" class="form-radio" name="searchType" value="customer" checked>
+                        <span class="ml-2 text-sm">客户</span>
+                    </label>
+                    <label class="inline-flex items-center mr-4">
+                        <input type="radio" class="form-radio" name="searchType" value="supplier">
+                        <span class="ml-2 text-sm">供应商</span>
+                    </label>
+                    <label class="inline-flex items-center">
+                        <input type="radio" class="form-radio" name="searchType" value="both">
+                        <span class="ml-2 text-sm">两者 (超级权限)</span>
+                    </label>
+                </div>
+                <p class="text-xs text-gray-500 mt-1">根据权限控制搜索范围。</p>
+            </div>
+        </div>
+
+        <!-- Lower Product Display and Configuration Area -->
+        <div id="lowerProductArea" class="flex flex-col md:flex-row gap-6">
+            <!-- Left Panel: Product Display -->
+            <div id="leftPanelProductDisplay" class="panel w-full md:w-3/5">
+                <h2 class="text-xl font-semibold text-gray-700 mb-4">产品信息展示</h2>
+                
+                <div id="productDetailsSection" class="border p-3 rounded mb-4 bg-gray-50">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-3">
+                        <div>
+                            <p class="text-sm font-medium text-gray-600">货号 (Item No.):</p>
+                            <p class="text-gray-800" id="productItemNo">P0000-XXXX</p>
+                        </div>
+                        <div>
+                            <p class="text-sm font-medium text-gray-600">产品属性:</p>
+                            <p class="text-gray-800" id="productAttribute">单件</p> <!-- or 组套 -->
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <p class="text-sm font-medium text-gray-600">产品名称:</p>
+                        <p class="text-gray-800" id="productName">示例产品名称 - Example Product Name</p>
+                    </div>
+                    <div class="mb-3">
+                        <p class="text-sm font-medium text-gray-600">产品说明:</p>
+                        <p class="text-gray-800 text-sm" id="productDescription">这是一个产品的详细说明，描述其特性和用途。</p>
+                    </div>
+                    <div class="mb-3">
+                        <p class="text-sm font-medium text-gray-600">产品图片 (最多3张):</p>
+                        <div class="flex space-x-2 mt-1">
+                            <img src="https://via.placeholder.com/100x100.png?text=图片1" alt="产品图片1" class="w-24 h-24 object-cover border rounded">
+                            <img src="https://via.placeholder.com/100x100.png?text=图片2" alt="产品图片2" class="w-24 h-24 object-cover border rounded">
+                            <img src="https://via.placeholder.com/100x100.png?text=图片3" alt="产品图片3" class="w-24 h-24 object-cover border rounded">
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-3">
+                        <div>
+                            <p class="text-sm font-medium text-gray-600">供应商 (权限):</p>
+                            <p class="text-gray-800 text-sm" id="productSuppliers">供应商A, 供应商B</p>
+                        </div>
+                        <div>
+                            <p class="text-sm font-medium text-gray-600">客户 (权限):</p>
+                            <p class="text-gray-800 text-sm" id="productCustomers">客户X, 客户Y</p>
+                        </div>
+                    </div>
+                     <button class="text-sm text-blue-500 hover:underline"><i class="fas fa-edit mr-1"></i>跳转到产品管理页面进行编辑/删除</button>
+                </div>
+
+                <div id="relatedFilesSection" class="mb-4">
+                    <h3 class="text-md font-semibold text-gray-700 mb-2">相关文件 (根据权限查看/上传)</h3>
+                    <ul class="list-disc list-inside pl-1 text-sm space-y-1">
+                        <li><a href="#" class="text-blue-600 hover:underline">产品规格书.pdf <i class="fas fa-eye ml-1"></i></a></li>
+                        <li><a href="#" class="text-blue-600 hover:underline">设计图纸.dwg <i class="fas fa-eye ml-1"></i></a></li>
+                        <li><a href="#" class="text-blue-600 hover:underline">宣传手册.docx <i class="fas fa-eye ml-1"></i></a></li>
+                    </ul>
+                </div>
+
+                <div id="configurationRecordsSection">
+                    <h3 class="text-md font-semibold text-gray-700 mb-2">配置记录</h3>
+                    <div class="space-y-2 max-h-60 overflow-y-auto p-2 border rounded bg-gray-50">
+                        <div class="p-2 border-b hover:bg-gray-100 cursor-pointer" title="双击进入右边区域进行编辑/复制/删除">
+                            <p class="text-sm">记录编号: <span class="font-semibold">CFG-001</span> (产品货号: P0000-XXXX)</p>
+                            <p class="text-xs text-gray-600">规格: 颜色-红色, 尺寸-L | 供应商: 供应商A | 客户: 客户X</p>
+                        </div>
+                        <div class="p-2 border-b hover:bg-gray-100 cursor-pointer" title="双击进入右边区域进行编辑/复制/删除">
+                            <p class="text-sm">记录编号: <span class="font-semibold">CFG-002</span> (产品货号: P0000-XXXX)</p>
+                            <p class="text-xs text-gray-600">规格: 材料-纯棉 | 供应商: 供应商B | 客户: 客户Y (复核通过 - 黑色)</p>
+                        </div>
+                        <div class="p-2 hover:bg-gray-100 cursor-pointer" title="双击进入右边区域进行编辑/复制/删除">
+                            <p class="text-sm">记录编号: <span class="font-semibold text-yellow-600">CFG-003</span> (产品货号: P0000-XXXX) (待复核 - 黄色)</p>
+                            <p class="text-xs text-gray-600">规格: 无线充电-支持 | 供应商: 供应商A | 客户: 客户Z</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Panel: Product Configuration -->
+            <div id="rightPanelProductConfig" class="panel w-full md:w-2/5 relative">
+                <div id="configIdleOverlay" class="absolute inset-0 bg-white bg-opacity-80 flex flex-col items-center justify-center z-10 p-4 rounded-lg">
+                    <i class="fas fa-info-circle text-blue-500 text-4xl mb-3"></i>
+                    <h3 class="text-lg font-medium mb-2 text-gray-700">待机状态</h3>
+                    <p class="text-gray-600 mb-4 text-center text-sm">选择左侧产品，然后点击下方按钮开始配置。</p>
+                    <button id="startNewConfigBtn" class="bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded text-sm"><i class="fas fa-plus-circle mr-1"></i>新建配置</button>
+                </div>
+
+                <div id="configActiveContent" class="hidden"> <!-- Hidden by default, shown when active -->
+                    <div class="flex justify-between items-center mb-3">
+                        <h2 class="text-xl font-semibold text-gray-700">产品配置区</h2>
+                        <div>
+                            <button id="newConfigBtn_active" class="text-sm bg-blue-500 hover:bg-blue-600 text-white py-1 px-3 rounded mr-1"><i class="fas fa-plus mr-1"></i>新建</button>
+                            <button id="copyConfigBtn_active" class="text-sm bg-yellow-500 hover:bg-yellow-600 text-white py-1 px-3 rounded"><i class="fas fa-copy mr-1"></i>复制新建</button>
+                        </div>
+                    </div>
+                    <p class="text-sm text-gray-600 mb-3">当前状态: <span id="configStatus" class="font-semibold">编辑中 (记录: CFG-001)</span></p>
+                    
+                    <!-- Tab Navigation -->
+                    <div class="mb-4 border-b border-gray-200">
+                        <ul class="flex flex-wrap -mb-px text-sm font-medium text-center" id="configTabs" role="tablist">
+                            <li role="presentation"><button class="tab-button p-3 border-b-2 rounded-t-lg" data-tab-target="specsContent">规格</button></li>
+                            <li role="presentation"><button class="tab-button p-3 border-b-2 rounded-t-lg" data-tab-target="kitsContent">组套</button></li>
+                            <li role="presentation"><button class="tab-button p-3 border-b-2 rounded-t-lg" data-tab-target="suppliersContent">供应商</button></li>
+                            <li role="presentation"><button class="tab-button p-3 border-b-2 rounded-t-lg" data-tab-target="customersContent">客户</button></li>
+                        </ul>
+                    </div>
+
+                    <!-- Tab Content Area -->
+                    <div id="configTabsContentContainer" class="space-y-3 text-sm max-h-[400px] overflow-y-auto p-1">
+                        <!-- Specifications Tab Content -->
+                        <div id="specsContent" class="tab-content p-2 bg-gray-50 rounded">
+                            <h3 class="font-semibold mb-2">配置规格 <span class="text-xs text-gray-500">(修改激活闭环)</span></h3>
+                            <div class="grid grid-cols-2 gap-x-2 mb-2">
+                                <label class="font-medium">规格名称</label>
+                                <label class="font-medium">规格说明</label>
+                            </div>
+                            <div class="space-y-2" id="specsList">
+                                <div class="grid grid-cols-2 gap-x-2 items-center">
+                                    <input type="text" value="颜色" class="p-1 border rounded w-full">
+                                    <input type="text" value="红色" class="p-1 border rounded w-full">
+                                </div>
+                                <div class="grid grid-cols-2 gap-x-2 items-center">
+                                    <input type="text" value="尺寸" class="p-1 border rounded w-full">
+                                    <input type="text" value="L" class="p-1 border rounded w-full">
+                                </div>
+                            </div>
+                            <button class="mt-2 text-xs bg-green-500 hover:bg-green-600 text-white py-1 px-2 rounded"><i class="fas fa-plus mr-1"></i>添加新规格 (权限)</button>
+                        </div>
+
+                        <!-- Kits Tab Content -->
+                        <div id="kitsContent" class="tab-content hidden p-2 bg-gray-50 rounded">
+                            <h3 class="font-semibold mb-2">配置组套 <span id="kitTabStatus" class="text-xs text-gray-500">(产品属性为组套时激活闭环, 当前产品: 单件 - 此区域通常禁用)</span></h3>
+                            <!-- Content for '组套' product type -->
+                            <div id="kitProductSpecificContent" class="hidden">
+                                <button class="text-xs bg-blue-500 hover:bg-blue-600 text-white py-1 px-2 rounded mb-2"><i class="fas fa-search mr-1"></i>从产品管理选择产品配置记录</button>
+                                <table class="w-full text-xs border-collapse border border-gray-300">
+                                    <thead>
+                                        <tr class="bg-gray-100">
+                                            <th class="border p-1">品名</th><th class="border p-1">供应商</th><th class="border p-1">价格</th><th class="border p-1">操作</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td class="border p-1">子产品A</td><td class="border p-1">子供应商X</td><td class="border p-1">¥10.00</td>
+                                            <td class="border p-1"><a href="#" class="text-blue-500">查看</a> | <a href="#" class="text-red-500">删除</a></td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                                <p class="mt-2 text-xs">产品价格合计: <span class="font-semibold">¥XX.XX</span></p>
+                                <p class="mt-1 text-xs">手动添加备选: <input type="text" placeholder="品名" class="p-1 border rounded w-1/3 text-xs"> <input type="text" placeholder="供应商" class="p-1 border rounded w-1/3 text-xs"> <input type="text" placeholder="价格" class="p-1 border rounded w-1/4 text-xs"></p>
+                            </div>
+                            <p id="singleProductKitMessage" class="text-gray-500 text-center p-4">此产品为“单件”，组套配置不适用。</p>
+                        </div>
+
+                        <!-- Suppliers Tab Content -->
+                        <div id="suppliersContent" class="tab-content hidden p-2 bg-gray-50 rounded">
+                            <h3 class="font-semibold mb-2">配置供应商</h3>
+                            <button class="text-xs bg-blue-500 hover:bg-blue-600 text-white py-1 px-2 rounded mb-2"><i class="fas fa-plus mr-1"></i>添加供应商 (跳转管理界面)</button>
+                            <div class="space-y-2">
+                                <select class="w-full p-1 border rounded">
+                                    <option>选择供应商...</option>
+                                    <option>供应商A (已选)</option>
+                                    <option>供应商B</option>
+                                </select>
+                                <div><label>供应商货号 (Mfr#):</label><input type="text" class="w-full p-1 border rounded" value="SUP-ITEM-001"></div>
+                                <div><label>供应商价格:</label><input type="text" class="w-full p-1 border rounded" value="100.00"></div>
+                                <div class="text-xs">最新报价: 100.00 | 最低报价: 95.00 <button class="ml-1 text-blue-500 text-xs">增加新报价</button></div>
+                                <div><label>上传文件/图片:</label><input type="file" class="w-full text-xs"></div>
+                                <div><label>业务负责人 (权限):</label>
+                                    <select class="w-full p-1 border rounded"><option>选择负责人 (跳转员工页)</option><option>张三</option></select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Customers Tab Content -->
+                        <div id="customersContent" class="tab-content hidden p-2 bg-gray-50 rounded">
+                            <h3 class="font-semibold mb-2">配置客户</h3>
+                            <button class="text-xs bg-blue-500 hover:bg-blue-600 text-white py-1 px-2 rounded mb-2"><i class="fas fa-plus mr-1"></i>添加客户 (跳转管理界面)</button>
+                            <div class="space-y-2">
+                                <select class="w-full p-1 border rounded">
+                                    <option>选择客户...</option>
+                                    <option>客户X (已选)</option>
+                                    <option>客户Y</option>
+                                </select>
+                                <div><label>客户货号 (SKU#):</label><input type="text" class="w-full p-1 border rounded" value="CUST-SKU-XYZ"></div>
+                                <div><label>客户价格:</label><input type="text" class="w-full p-1 border rounded" value="150.00"></div>
+                                <div class="text-xs">最新报价: 150.00 | 最低报价: 145.00 <button class="ml-1 text-blue-500 text-xs">增加新报价</button></div>
+                                <div><label>上传文件/图片:</label><input type="file" class="w-full text-xs"></div>
+                                <div><label>业务负责人 (权限):</label>
+                                    <select class="w-full p-1 border rounded"><option>选择负责人 (跳转员工页)</option><option>李四</option></select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mt-4 pt-3 border-t flex justify-end space-x-2">
+                        <button class="text-sm bg-gray-500 hover:bg-gray-600 text-white py-2 px-3 rounded"><i class="fas fa-times mr-1"></i>取消当前修改</button>
+                        <button class="text-sm bg-yellow-500 hover:bg-yellow-600 text-white py-2 px-3 rounded"><i class="fas fa-save mr-1"></i>保存为待复核 (黄色)</button>
+                        <button class="text-sm bg-green-600 hover:bg-green-700 text-white py-2 px-3 rounded"><i class="fas fa-check-circle mr-1"></i>提交记录 (权限-复核通过)</button>
+                    </div>
+                </div> <!-- End of configActiveContent -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Modular JavaScript Files -->
+    <!-- Load module files first, then the main app orchestrator -->
+    <script src="assets/js/modules/category-search.js"></script>
+    <!-- Add other module scripts here as they are created, e.g.: -->
+    <!-- <script src="assets/js/modules/product-search.js"></script> -->
+    <!-- <script src="assets/js/modules/customer-supplier-search.js"></script> -->
+    <!-- <script src="assets/js/modules/product-display.js"></script> -->
+    <!-- <script src="assets/js/modules/product-config.js"></script> -->
+
+    <script src="assets/js/main-app.js"></script>
+
+</body>
+</html>
