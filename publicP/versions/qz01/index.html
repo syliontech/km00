@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>产品数据库管理系统 (PDDB)</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css">
+    <link rel="stylesheet" href="assets/css/styles.css">
+</head>
+<body class="bg-gray-100 min-h-screen">
+    <div class="container mx-auto px-4 py-8">
+        <header class="mb-8">
+            <h1 class="text-3xl font-bold text-gray-800">产品数据库管理系统 (PDDB)</h1>
+            <p class="text-gray-600 mt-2">基于Supabase的产品管理ERP系统</p>
+        </header>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <!-- 产品分类管理卡片 -->
+            <div class="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow">
+                <div class="p-6">
+                    <h2 class="text-xl font-semibold text-gray-800 mb-2">产品分类管理</h2>
+                    <p class="text-gray-600 mb-4">支持产品分类的搜索与多选，进入分类管理界面。</p>
+                    
+                    <!-- 分类搜索框 -->
+                    <div class="mb-4">
+                        <input type="text" class="w-full border rounded px-3 py-2 mb-2" placeholder="搜索产品分类..." id="categorySearchInput">
+                        <div class="flex flex-wrap gap-1 mb-2">
+                            <span class="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">工具类 ×</span>
+                            <span class="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">电子类 ×</span>
+                        </div>
+                    </div>
+                    
+                    <a href="category-management.html" class="inline-block bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 px-4 rounded transition-colors">
+                        进入管理
+                    </a>
+                </div>
+            </div>
+
+            <!-- 产品管理卡片 -->
+            <div class="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow">
+                <div class="p-6">
+                    <h2 class="text-xl font-semibold text-gray-800 mb-2">产品管理</h2>
+                    <p class="text-gray-600 mb-4">在已选分类下搜索产品，进入产品管理界面。</p>
+                    
+                    <!-- 产品分类多选和搜索 -->
+                    <div class="mb-4">
+                        <select multiple class="w-full border rounded px-3 py-2 mb-2 text-sm" id="productCategoryFilter">
+                            <option selected>工具类</option>
+                            <option>电子类</option>
+                            <option>家居类</option>
+                        </select>
+                        <input type="text" class="w-full border rounded px-3 py-2" placeholder="搜索产品名称/编码..." id="productSearchInput">
+                    </div>
+                    
+                    <a href="product-management.html" class="inline-block bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 px-4 rounded transition-colors">
+                        进入管理
+                    </a>
+                </div>
+            </div>
+
+            <!-- 客户/供应商管理卡片 -->
+            <div class="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow opacity-70">
+                <div class="p-6">
+                    <h2 class="text-xl font-semibold text-gray-800 mb-2">客户/供应商管理</h2>
+                    <p class="text-gray-600 mb-4">支持客户/供应商的搜索，权限控制，进入对应管理界面。</p>
+                    
+                    <!-- 客户/供应商类型选择和搜索 -->
+                    <div class="mb-4">
+                        <select class="w-full border rounded px-3 py-2 mb-2" id="clientVendorTypeSelect">
+                            <option value="client">客户</option>
+                            <option value="vendor">供应商</option>
+                        </select>
+                        <input type="text" class="w-full border rounded px-3 py-2" placeholder="搜索客户/供应商..." id="clientVendorSearchInput">
+                    </div>
+                    
+                    <span class="inline-block bg-gray-300 text-gray-600 font-medium py-2 px-4 rounded cursor-not-allowed">
+                        即将推出
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 产品展示区（下部，左右两栏） -->
+        <div class="mt-8 bg-white rounded-lg shadow-md overflow-hidden">
+            <div class="p-4 bg-gray-50 border-b">
+                <h2 class="text-xl font-semibold text-gray-800">产品展示与管理</h2>
+            </div>
+            
+            <div class="flex flex-col md:flex-row">
+                <!-- 左侧：产品录入/展示/编辑 -->
+                <div class="w-full md:w-1/2 p-4 border-r">
+                    <h3 class="text-lg font-medium mb-4">产品录入/展示/编辑</h3>
+                    
+                    <!-- 分类选择与搜索 -->
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">产品分类</label>
+                        <select class="w-full border rounded px-3 py-2" id="productCategory">
+                            <option value="">选择分类</option>
+                            <option>工具类</option>
+                            <option>电子类</option>
+                            <option>家居类</option>
+                        </select>
+                    </div>
+                    
+                    <!-- 产品编码 -->
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">产品编码</label>
+                        <div class="flex">
+                            <input type="text" class="w-full border rounded-l px-3 py-2" id="productCode" placeholder="自动生成或手动输入">
+                            <button class="bg-gray-200 px-3 py-2 rounded-r border-t border-r border-b">生成</button>
+                        </div>
+                    </div>
+                    
+                    <!-- 产品名称与描述 -->
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">中文描述</label>
+                        <textarea class="w-full border rounded px-3 py-2" rows="2" id="productDescCn" placeholder="输入中文产品描述"></textarea>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">英文描述</label>
+                        <textarea class="w-full border rounded px-3 py-2" rows="2" id="productDescEn" placeholder="输入英文产品描述"></textarea>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">详细说明</label>
+                        <textarea class="w-full border rounded px-3 py-2" rows="2" id="productDetails" placeholder="输入产品详细说明"></textarea>
+                    </div>
+                    
+                    <!-- 产品图片上传 -->
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">产品图片</label>
+                        <div class="flex items-center justify-center border-2 border-dashed border-gray-300 rounded-lg p-6 mb-2">
+                            <div class="text-center">
+                                <svg class="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48">
+                                    <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4h-12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                                </svg>
+                                <p class="mt-1 text-sm text-gray-500">点击或拖拽文件至此处上传</p>
+                            </div>
+                        </div>
+                        <div class="flex space-x-2">
+                            <div class="w-16 h-16 bg-gray-100 rounded flex items-center justify-center">
+                                <span class="text-xs text-gray-500">预览图</span>
+                            </div>
+                            <div class="w-16 h-16 bg-gray-100 rounded flex items-center justify-center">
+                                <span class="text-xs text-gray-500">+</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 产品性质选择 -->
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">产品性质</label>
+                        <div class="flex space-x-4">
+                            <label class="inline-flex items-center">
+                                <input type="radio" name="productType" value="single" class="form-radio" checked>
+                                <span class="ml-2">单件产品</span>
+                            </label>
+                            <label class="inline-flex items-center">
+                                <input type="radio" name="productType" value="group" class="form-radio">
+                                <span class="ml-2">组套产品</span>
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <!-- 操作按钮 -->
+                    <div class="flex justify-end space-x-2">
+                        <button class="bg-gray-300 text-gray-700 px-4 py-2 rounded">取消</button>
+                        <button class="bg-blue-500 text-white px-4 py-2 rounded">保存</button>
+                    </div>
+                </div>
+                
+                <!-- 右侧：供应商/客户产品配置区 -->
+                <div class="w-full md:w-1/2 p-4">
+                    <h3 class="text-lg font-medium mb-4">供应商/客户产品配置</h3>
+                    
+                    <!-- Tab导航 -->
+                    <div class="border-b mb-4">
+                        <ul class="flex -mb-px">
+                            <li class="mr-1">
+                                <a href="#" class="inline-block py-2 px-4 text-blue-500 border-b-2 border-blue-500 font-medium text-sm">规格</a>
+                            </li>
+                            <li class="mr-1">
+                                <a href="#" class="inline-block py-2 px-4 text-gray-500 hover:text-gray-700 font-medium text-sm">产品信息</a>
+                            </li>
+                            <li class="mr-1">
+                                <a href="#" class="inline-block py-2 px-4 text-gray-500 hover:text-gray-700 font-medium text-sm">历史报价</a>
+                            </li>
+                            <li class="mr-1">
+                                <a href="#" class="inline-block py-2 px-4 text-gray-500 hover:text-gray-700 font-medium text-sm">供应商价格</a>
+                            </li>
+                        </ul>
+                    </div>
+                    
+                    <!-- 规格Tab内容 -->
+                    <div id="specTabContent">
+                        <!-- 自定义SPEC字段 -->
+                        <div class="mb-4">
+                            <div class="flex justify-between items-center mb-2">
+                                <label class="block text-sm font-medium text-gray-700">规格字段</label>
+                                <button class="text-xs bg-green-100 text-green-800 px-2 py-1 rounded">添加字段</button>
+                            </div>
+                            
+                            <div class="space-y-2">
+                                <!-- 已添加的规格字段 -->
+                                <div class="flex space-x-2">
+                                    <input type="text" class="w-1/3 border rounded px-2 py-1 text-sm" value="材质" readonly>
+                                    <input type="text" class="w-2/3 border rounded px-2 py-1 text-sm" placeholder="输入材质...">
+                                </div>
+                                <div class="flex space-x-2">
+                                    <input type="text" class="w-1/3 border rounded px-2 py-1 text-sm" value="颜色" readonly>
+                                    <input type="text" class="w-2/3 border rounded px-2 py-1 text-sm" placeholder="输入颜色...">
+                                </div>
+                                <div class="flex space-x-2">
+                                    <input type="text" class="w-1/3 border rounded px-2 py-1 text-sm" value="尺寸" readonly>
+                                    <input type="text" class="w-2/3 border rounded px-2 py-1 text-sm" placeholder="输入尺寸...">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- 组套产品选择区域（默认隐藏） -->
+                        <div class="mb-4 hidden" id="groupProductSection">
+                            <div class="flex justify-between items-center mb-2">
+                                <label class="block text-sm font-medium text-gray-700">组套产品选择</label>
+                                <button class="text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded">从产品库添加</button>
+                            </div>
+                            
+                            <div class="border rounded p-2 mb-2">
+                                <div class="flex justify-between items-center">
+                                    <span class="text-sm">折叠美工刀 (T001)</span>
+                                    <button class="text-xs text-red-500">删除</button>
+                                </div>
+                            </div>
+                            
+                            <div class="border rounded p-2">
+                                <div class="flex justify-between items-center">
+                                    <span class="text-sm">备用刀片 5片装 (T001-B)</span>
+                                    <button class="text-xs text-red-500">删除</button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- 供应商选择 -->
+                        <div class="mb-4">
+                            <label class="block text-sm font-medium text-gray-700 mb-1">供应商</label>
+                            <div class="flex space-x-2">
+                                <select class="w-2/3 border rounded px-2 py-1 text-sm">
+                                    <option value="">选择供应商...</option>
+                                    <option>上海工具厂</option>
+                                    <option>深圳电子有限公司</option>
+                                </select>
+                                <input type="text" class="w-1/3 border rounded px-2 py-1 text-sm" placeholder="供应商货号">
+                            </div>
+                        </div>
+                        
+                        <!-- 客户SKU与客户选择 -->
+                        <div class="mb-4">
+                            <label class="block text-sm font-medium text-gray-700 mb-1">客户</label>
+                            <div class="flex space-x-2 mb-2">
+                                <input type="text" class="w-1/3 border rounded px-2 py-1 text-sm" placeholder="客户SKU">
+                                <select class="w-2/3 border rounded px-2 py-1 text-sm" disabled>
+                                    <option value="">选择客户(需先填写SKU)...</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <!-- 价格信息 -->
+                        <div class="mb-4">
+                            <div class="grid grid-cols-2 gap-2">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">供应商价格</label>
+                                    <input type="text" class="w-full border rounded px-2 py-1 text-sm" placeholder="输入供应商价格...">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">客户价格</label>
+                                    <input type="text" class="w-full border rounded px-2 py-1 text-sm" placeholder="输入客户价格...">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <footer class="mt-12 text-center text-gray-600">
+            <p>产品数据库管理系统 (PDDB) &copy; 2025</p>
+        </footer>
+    </div>
+
+    <!-- JavaScript 文件 -->
+    <script src="config/supabase-config.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="assets/js/app.js"></script>
+</body>
+</html>

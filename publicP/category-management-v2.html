@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>新分类管理系统 (v2)</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css">
+    <link rel="stylesheet" href="assets/css/styles.css"> 
+    <style>
+        /* Custom styles for tree view or specific elements if needed */
+        .filter-select {
+            min-width: 150px;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen p-4">
+    <div class="container mx-auto">
+        <div class="flex justify-between items-center mb-6">
+            <h1 class="text-3xl font-bold">新分类管理系统 (v2)</h1>
+            <a href="index_rearchitected.html" class="btn btn-secondary">返回主页</a>
+        </div>
+
+        <!-- Filter Section -->
+        <div class="mb-6 p-4 bg-white rounded-lg shadow">
+            <h2 class="text-xl font-semibold mb-3">分类筛选</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div>
+                    <label for="filterPurpose" class="block text-sm font-medium text-gray-700">用途 (L1)</label>
+                    <select id="filterPurpose" name="filterPurpose" class="mt-1 block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm filter-select"></select>
+                </div>
+                <div>
+                    <label for="filterCategoryLevel" class="block text-sm font-medium text-gray-700">产品分类 (L2)</label>
+                    <select id="filterCategoryLevel" name="filterCategoryLevel" class="mt-1 block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm filter-select"></select>
+                </div>
+                <div>
+                    <label for="filterSubcategory" class="block text-sm font-medium text-gray-700">产品细分 (L3)</label>
+                    <select id="filterSubcategory" name="filterSubcategory" class="mt-1 block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm filter-select"></select>
+                </div>
+                <div>
+                    <label for="filterDetailLevel" class="block text-sm font-medium text-gray-700">细分说明 (L4)</label>
+                    <select id="filterDetailLevel" name="filterDetailLevel" class="mt-1 block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm filter-select"></select>
+                </div>
+            </div>
+        </div>
+
+        <!-- Action Buttons and Search -->
+        <div class="flex justify-between items-center mb-4">
+            <div>
+                <button id="addNewItemBtn" class="btn btn-add">添加新条目 (L5)</button>
+                <button id="exportCsvBtn" class="btn btn-secondary">导出 CSV</button>
+                <div class="relative">
+                    <label for="importCsvInput" class="btn btn-secondary cursor-pointer">
+                        导入 CSV
+                    </label>
+                    <input type="file" id="importCsvInput" accept=".csv" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer">
+                </div>
+            </div>
+            <div class="w-1/3">
+                <label for="searchInput" class="sr-only">搜索</label>
+                <input id="searchInput" type="text" placeholder="搜索名称或编码..." class="form-input w-full" aria-label="搜索分类">
+            </div>
+        </div>
+
+        <!-- Category Display Area -->
+        <div class="bg-white rounded-lg shadow overflow-hidden">
+            <div class="p-4">
+                <h2 class="text-xl font-semibold mb-3">分类列表</h2>
+                <div id="categoryDisplayArea" class="overflow-x-auto">
+                    <!-- Categories will be loaded here by JavaScript -->
+                    <p class="text-gray-500">正在加载分类数据...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add/Edit Item Modal -->
+    <div id="itemModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full flex items-center justify-center" style="display: none;">
+        <div class="relative mx-auto p-6 border w-full max-w-2xl shadow-lg rounded-md bg-white">
+            <div class="flex justify-between items-center mb-4">
+                <h3 id="modalTitle" class="text-2xl font-semibold">添加新条目</h3>
+                <button id="closeModalBtn" class="text-black">&times;</button>
+            </div>
+            <form id="itemForm">
+                <input type="hidden" id="itemId" name="itemId"> <!-- For editing existing items -->
+                <input type="hidden" id="level4Code" name="level4Code"> <!-- To store the L4 code when adding L5 -->
+
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+                    <div>
+                        <label for="用途" class="block text-sm font-medium text-gray-700">用途 (L1)</label>
+                        <select id="用途" name="用途" class="form-input mt-1" required>
+                            <option value="">请选择用途...</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="产品分类" class="block text-sm font-medium text-gray-700">产品分类 (L2)</label>
+                        <select id="产品分类" name="产品分类" class="form-input mt-1" required>
+                            <option value="">请选择产品分类...</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="产品细分" class="block text-sm font-medium text-gray-700">产品细分 (L3)</label>
+                        <select id="产品细分" name="产品细分" class="form-input mt-1" required>
+                            <option value="">请选择产品细分...</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="细分说明" class="block text-sm font-medium text-gray-700">细分说明 (L4)</label>
+                        <select id="细分说明" name="细分说明" class="form-input mt-1" required>
+                            <option value="">请选择细分说明...</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="mb-4">
+                    <label for="modalItemName" class="block text-sm font-medium text-gray-700">条目描述名称 (L5)</label>
+                    <input type="text" id="modalItemName" name="modalItemName" class="form-input mt-1" placeholder="例如: 型号 XYZ, 红色, 16GB RAM" required>
+                </div>
+
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700">完整分类编码 (自动生成)</label>
+                    <input type="text" id="code" name="code" class="form-input mt-1 bg-gray-100" readonly>
+                </div>
+
+                <div class="flex justify-end gap-3 mt-6">
+                    <button type="button" id="cancelModalBtn" class="btn btn-secondary">取消</button>
+                    <button type="submit" id="saveItemBtn" class="btn btn-primary">保存条目</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="config/config.js"></script> <!-- Assuming you have this -->
+    <script src="config/supabase-config.js"></script> <!-- Assuming you have this -->
+    <script src="services/category-v2-service.js"></script>
+    <script src="assets/js/category-management-v2-app.js"></script>
+</body>
+</html>

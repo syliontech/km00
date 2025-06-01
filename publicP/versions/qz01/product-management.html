@@ -1,0 +1,596 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>产品管理 - 产品数据库管理系统 (PDDB)</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="assets/css/styles.css">
+    <style>
+        .file-upload-container {
+            border: 2px dashed #cbd5e0;
+            border-radius: 0.5rem;
+            padding: 1.5rem;
+            text-align: center;
+            transition: all 0.3s;
+        }
+        .file-upload-container:hover {
+            border-color: #4299e1;
+        }
+        .preview-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-top: 1rem;
+        }
+        .preview-item {
+            position: relative;
+            width: 100px;
+            height: 100px;
+            border-radius: 0.25rem;
+            overflow: hidden;
+        }
+        .preview-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .preview-item .remove-btn {
+            position: absolute;
+            top: 0.25rem;
+            right: 0.25rem;
+            background: rgba(0, 0, 0, 0.5);
+            color: white;
+            width: 1.5rem;
+            height: 1.5rem;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+        }
+        .file-type-icon {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: #f7fafc;
+            font-size: 2rem;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen">
+    <div class="container mx-auto px-4 py-8">
+        <header class="mb-8 flex justify-between items-center">
+            <div>
+                <h1 class="text-3xl font-bold text-gray-800">产品管理</h1>
+                <p class="text-gray-600 mt-2">管理产品信息，上传多媒体文件，关联客户和供应商</p>
+            </div>
+            <a href="index.html" class="bg-gray-500 hover:bg-gray-600 text-white font-medium py-2 px-4 rounded transition-colors">
+                返回首页
+            </a>
+        </header>
+
+        <!-- 产品管理卡片上部：分类多选、搜索、新建、编辑 -->
+        <div class="bg-white rounded-lg shadow-md p-4 mb-4 flex flex-wrap items-center gap-2">
+            <label class="font-semibold">产品分类：</label>
+            <select multiple class="border rounded px-2 py-1 w-48" id="categoryFilter">
+                <option>工具类</option>
+                <option>电子类</option>
+                <option>家居类</option>
+            </select>
+            <input type="text" class="border rounded px-2 py-1 w-40" placeholder="搜索产品名称/编码" id="productSearchInput">
+            <button class="bg-blue-500 text-white px-3 py-1 rounded" id="addProductBtn">新建产品</button>
+            <button class="bg-gray-400 text-white px-3 py-1 rounded" id="editProductBtn" disabled>编辑产品</button>
+        </div>
+
+        <!-- 下部主内容区：产品展示（核心字段） -->
+        <div class="bg-white rounded-lg shadow-md p-4">
+            <table class="min-w-full text-xs border">
+                <thead>
+                    <tr class="bg-gray-100">
+                        <th class="py-2 px-2">产品图片</th>
+                        <th class="py-2 px-2">产品分类</th>
+                        <th class="py-2 px-2">产品编码</th>
+                        <th class="py-2 px-2">产品名称/描述</th>
+                        <th class="py-2 px-2">详细说明</th>
+                        <th class="py-2 px-2">产品属性</th>
+                        <th class="py-2 px-2">操作</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td class="py-2 px-2"><img src="产品主图.jpg" alt="产品图片" class="w-16 h-16 object-contain"></td>
+                        <td class="py-2 px-2">工具类</td>
+                        <td class="py-2 px-2">T001</td>
+                        <td class="py-2 px-2">折叠美工刀</td>
+                        <td class="py-2 px-2">铝合金手柄+钢合金刀头，1+5片刀片，灰色</td>
+                        <td class="py-2 px-2">单件</td>
+                        <td class="py-2 px-2">
+                            <button class="text-blue-500 hover:underline text-xs">编辑</button>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="py-2 px-2"><img src="产品主图.jpg" alt="产品图片" class="w-16 h-16 object-contain"></td>
+                        <td class="py-2 px-2">电子类</td>
+                        <td class="py-2 px-2">E002</td>
+                        <td class="py-2 px-2">数字万用表</td>
+                        <td class="py-2 px-2">高精度数字显示，便携式设计</td>
+                        <td class="py-2 px-2">组套</td>
+                        <td class="py-2 px-2">
+                            <button class="text-blue-500 hover:underline text-xs">编辑</button>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- 产品添加/编辑模态框 -->
+        <div id="productFormModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div class="bg-white rounded-lg shadow-xl w-2/3 max-h-[90vh] overflow-y-auto">
+                <div class="p-4 border-b flex justify-between items-center">
+                    <h3 class="text-lg font-semibold" id="modalTitle">新建产品</h3>
+                    <button id="closeModalBtn" class="text-gray-500 hover:text-gray-700">×</button>
+                </div>
+                <div class="p-4">
+                    <form id="productForm" class="space-y-4">
+                        <div class="grid grid-cols-2 gap-4">
+                            <!-- 产品分类 -->
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">产品分类</label>
+                                <select id="productCategory" class="w-full border rounded px-3 py-2">
+                                    <option value="">选择分类</option>
+                                    <option>工具类</option>
+                                    <option>电子类</option>
+                                    <option>家居类</option>
+                                </select>
+                            </div>
+                            <!-- 产品编码 -->
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">产品编码</label>
+                                <input type="text" id="productCode" class="w-full border rounded px-3 py-2" placeholder="输入产品编码">
+                            </div>
+                            <!-- 产品名称 -->
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">产品名称</label>
+                                <input type="text" id="productName" class="w-full border rounded px-3 py-2" placeholder="输入产品名称">
+                            </div>
+                            <!-- 产品属性 -->
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">产品属性</label>
+                                <select id="productType" class="w-full border rounded px-3 py-2">
+                                    <option value="single">单件</option>
+                                    <option value="group">组套</option>
+                                </select>
+                            </div>
+                        </div>
+                        <!-- 产品描述 -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">中文描述</label>
+                            <textarea id="productDescCn" class="w-full border rounded px-3 py-2" rows="2" placeholder="输入中文产品描述"></textarea>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">英文描述</label>
+                            <textarea id="productDescEn" class="w-full border rounded px-3 py-2" rows="2" placeholder="输入英文产品描述"></textarea>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">发货描述</label>
+                            <textarea id="productDescDelivery" class="w-full border rounded px-3 py-2" rows="2" placeholder="输入发货描述"></textarea>
+                        </div>
+                        <!-- 产品图片上传 -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">产品图片</label>
+                            <div class="file-upload-container">
+                                <input type="file" id="productImages" multiple class="hidden">
+                                <label for="productImages" class="cursor-pointer block">
+                                    <i class="fas fa-cloud-upload-alt text-3xl text-gray-400"></i>
+                                    <p class="mt-2 text-sm text-gray-500">点击或拖拽文件至此处上传</p>
+                                </label>
+                                <div class="preview-container" id="imagePreviewContainer"></div>
+                            </div>
+                        </div>
+                        <!-- 按钮组 -->
+                        <div class="flex justify-end space-x-2">
+                            <button type="button" id="cancelProductBtn" class="bg-gray-300 text-gray-700 px-4 py-2 rounded">取消</button>
+                            <button type="submit" id="saveProductBtn" class="bg-blue-500 text-white px-4 py-2 rounded">保存</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- 下部主内容区：左右结构 -->
+        <div class="flex flex-row gap-2 w-full h-[500px]">
+            <!-- 左侧区域：产品展示 -->
+            <div class="flex flex-col w-full p-2 border rounded bg-white">
+                <!-- 产品图片轮播 -->
+                <div class="flex flex-row items-center justify-center mb-2">
+                    <button class="px-2" id="prevImageBtn">&lt;</button>
+                    <img src="产品主图.jpg" alt="产品图片" class="w-48 h-48 object-contain mx-2" id="mainProductImage">
+                    <button class="px-2" id="nextImageBtn">&gt;</button>
+                </div>
+                <!-- 产品描述 -->
+                <div class="mb-2">
+                    <div class="text-gray-700 text-sm">中文描述：</div>
+                    <div class="text-black font-semibold mb-1" id="descCn">这里显示中文描述</div>
+                    <div class="text-gray-700 text-sm">英文描述：</div>
+                    <div class="mb-1" id="descEn">Here is English description</div>
+                    <div class="text-gray-700 text-sm">发货描述：</div>
+                    <div class="mb-1" id="descDelivery">1 FOLDING utility knife with blade<br>5 replacement blades</div>
+                </div>
+                <!-- 产品属性与基本信息 -->
+                <div class="flex items-center mb-2">
+                    <span class="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded mr-2">工具类</span>
+                    <span class="bg-green-100 text-green-800 text-xs px-2 py-1 rounded">单件</span>
+                </div>
+                <!-- 产品规格表格 -->
+                <table class="w-full text-xs border-t mt-2">
+                    <tr>
+                        <td>产品编码</td>
+                        <td id="codeCell">T001</td>
+                        <td>材质</td>
+                        <td id="materialCell">铝合金+钢合金</td>
+                        <td>颜色</td>
+                        <td id="colorCell">灰色</td>
+                        <td>外形尺寸</td>
+                        <td id="sizeCell">15.5 x 3.8 x 1.2 cm</td>
+                        <td>报价</td>
+                        <td id="priceCell">$5.99</td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+
+        <!-- 产品表单模态框 -->
+        <div id="productModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
+            <div class="bg-white rounded-lg shadow-lg w-full max-w-4xl max-h-screen overflow-y-auto">
+                <div class="p-6">
+                    <div class="flex justify-between items-center mb-6">
+                        <h3 class="text-xl font-semibold text-gray-800" id="modalTitle">添加产品</h3>
+                        <button id="closeModalBtn" class="text-gray-500 hover:text-gray-700">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+
+                    <form id="productForm" class="space-y-6">
+                        <input type="hidden" id="products_pkey" name="products_pkey">
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <!-- 产品分类选择 -->
+                            <div>
+                                <label for="category_filter" class="block text-sm font-medium text-gray-700 mb-1">产品分类筛选</label>
+                                <div class="flex space-x-2">
+                                    <input type="text" id="category_filter" placeholder="输入关键字筛选分类" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                                    <button type="button" id="filterCategoryBtn" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-md transition-colors">
+                                        <i class="fas fa-search"></i>
+                                    </button>
+                                </div>
+                                <div class="mt-2">
+                                    <select id="category_select" name="category_ID" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                                        <option value="">请选择产品分类</option>
+                                        <!-- 分类选项将通过JavaScript动态加载 -->
+                                    </select>
+                                    <div class="text-xs text-blue-600 mt-1">双击选择项可进入分类管理</div>
+                                </div>
+                            </div>
+
+                            <!-- 产品编码 (自动生成，只读) -->
+                            <div>
+                                <label for="product_code" class="block text-sm font-medium text-gray-700 mb-1">产品编码</label>
+                                <input type="text" id="product_code" name="product_code" class="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-100" readonly>
+                                <p class="mt-1 text-xs text-gray-500">产品编码将基于所选分类自动生成</p>
+                            </div>
+
+                            <!-- 中文产品描述 -->
+                            <div>
+                                <label for="description_cn" class="block text-sm font-medium text-gray-700 mb-1">中文产品描述</label>
+                                <input type="text" id="description_cn" name="品描" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500" required>
+                            </div>
+
+                            <!-- 英文产品描述 -->
+                            <div>
+                                <label for="description_en" class="block text-sm font-medium text-gray-700 mb-1">英文产品描述</label>
+                                <input type="text" id="description_en" name="Description" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500" required>
+                            </div>
+
+                            <!-- 中文详细说明 -->
+                            <div class="md:col-span-2">
+                                <label for="detail_cn" class="block text-sm font-medium text-gray-700 mb-1">中文详细说明</label>
+                                <textarea id="detail_cn" name="说明" rows="3" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"></textarea>
+                            </div>
+
+                            <!-- 英文详细说明 -->
+                            <div class="md:col-span-2">
+                                <label for="detail_en" class="block text-sm font-medium text-gray-700 mb-1">英文详细说明</label>
+                                <textarea id="detail_en" name="Detail" rows="3" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"></textarea>
+                            </div>
+
+                            <!-- 客户关联 -->
+                            <div>
+                                <label for="client_filter" class="block text-sm font-medium text-gray-700 mb-1">客户关联</label>
+                                <div class="flex space-x-2">
+                                    <input type="text" id="client_filter" placeholder="输入关键字查找客户" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                                    <button type="button" id="filterClientBtn" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-md transition-colors">
+                                        <i class="fas fa-search"></i>
+                                    </button>
+                                </div>
+                                <div class="mt-2">
+                                    <select id="clients_ID" name="clients_ID" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                                        <option value="">请选择客户</option>
+                                        <option value="new">+ 新建客户</option>
+                                        <!-- 客户选项将通过JavaScript动态加载 -->
+                                    </select>
+                                    <div class="text-xs text-blue-600 mt-1">双击选择项可查看客户详情</div>
+                                </div>
+                            </div>
+
+                            <!-- 客户产品关联 -->
+                            <div>
+                                <label for="clients_products_ID" class="block text-sm font-medium text-gray-700 mb-1">客户产品关联</label>
+                                <select id="clients_products_ID" name="clients_products_ID" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                                    <option value="">请选择客户产品</option>
+                                    <!-- 客户产品选项将通过JavaScript动态加载 -->
+                                </select>
+                            </div>
+
+                            <!-- 供应商关联 -->
+                            <div>
+                                <label for="vendor_filter" class="block text-sm font-medium text-gray-700 mb-1">供应商关联</label>
+                                <div class="flex space-x-2">
+                                    <input type="text" id="vendor_filter" placeholder="输入关键字查找供应商" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                                    <button type="button" id="filterVendorBtn" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-md transition-colors">
+                                        <i class="fas fa-search"></i>
+                                    </button>
+                                </div>
+                                <div class="mt-2">
+                                    <select id="vendors_ID" name="vendors_ID" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                                        <option value="">请选择供应商</option>
+                                        <option value="new">+ 新建供应商</option>
+                                        <!-- 供应商选项将通过JavaScript动态加载 -->
+                                    </select>
+                                    <div class="text-xs text-blue-600 mt-1">双击选择项可查看供应商详情</div>
+                                </div>
+                            </div>
+
+                            <!-- 供应商产品关联 -->
+                            <div>
+                                <label for="vendors_products_ID" class="block text-sm font-medium text-gray-700 mb-1">供应商产品关联</label>
+                                <select id="vendors_products_ID" name="vendors_products_ID" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                                    <option value="">请选择供应商产品</option>
+                                    <!-- 供应商产品选项将通过JavaScript动态加载 -->
+                                </select>
+                            </div>
+                        </div>
+       
+                        <!-- 图片上传区域 -->
+                        <div class="mt-6">
+                            <h4 class="text-lg font-medium text-gray-700 mb-3">产品图片</h4>
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <!-- 图片1上传 -->
+                                <div>
+                                    <label for="image1" class="block text-sm font-medium text-gray-700 mb-1">图片1</label>
+                                    <div class="file-upload-container" data-input="image1">
+                                        <input type="file" id="image1" name="image1" class="hidden file-input" accept="image/*">
+                                        <div class="upload-placeholder">
+                                            <i class="fas fa-cloud-upload-alt text-gray-400 text-3xl mb-2"></i>
+                                            <p class="text-gray-500">点击或拖拽上传图片</p>
+                                        </div>
+                                        <div class="preview-container" id="image1Preview"></div>
+                                    </div>
+                                </div>
+
+                                <!-- 图片2上传 -->
+                                <div>
+                                    <label for="image2" class="block text-sm font-medium text-gray-700 mb-1">图片2</label>
+                                    <div class="file-upload-container" data-input="image2">
+                                        <input type="file" id="image2" name="image2" class="hidden file-input" accept="image/*">
+                                        <div class="upload-placeholder">
+                                            <i class="fas fa-cloud-upload-alt text-gray-400 text-3xl mb-2"></i>
+                                            <p class="text-gray-500">点击或拖拽上传图片</p>
+                                        </div>
+                                        <div class="preview-container" id="image2Preview"></div>
+                                    </div>
+                                </div>
+
+                                <!-- 图片3上传 -->
+                                <div>
+                                    <label for="image3" class="block text-sm font-medium text-gray-700 mb-1">图片3</label>
+                                    <div class="file-upload-container" data-input="image3">
+                                        <input type="file" id="image3" name="image3" class="hidden file-input" accept="image/*">
+                                        <div class="upload-placeholder">
+                                            <i class="fas fa-cloud-upload-alt text-gray-400 text-3xl mb-2"></i>
+                                            <p class="text-gray-500">点击或拖拽上传图片</p>
+                                        </div>
+                                        <div class="preview-container" id="image3Preview"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 文件上传区域 -->
+                        <div class="mt-6">
+                            <h4 class="text-lg font-medium text-gray-700 mb-3">产品文件</h4>
+                            <div class="file-upload-container" data-input="productFiles">
+                                <input type="file" id="productFiles" name="productFiles" class="hidden file-input" multiple>
+                                <div class="upload-placeholder">
+                                    <i class="fas fa-file-upload text-gray-400 text-3xl mb-2"></i>
+                                    <p class="text-gray-500">点击或拖拽上传文件（PDF、Word、Excel、视频等）</p>
+                                </div>
+                                <div class="preview-container" id="filesPreview"></div>
+                            </div>
+                        </div>
+
+                        <div class="flex justify-end space-x-3 mt-8">
+                            <button type="button" id="cancelBtn" class="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400 transition-colors">
+                                取消
+                            </button>
+                            <button type="submit" class="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors">
+                                保存产品
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- 文件预览模态框 -->
+        <div id="filePreviewModal" class="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center hidden z-50">
+            <div class="bg-white rounded-lg shadow-lg w-full max-w-4xl">
+                <div class="p-4 border-b flex justify-between items-center">
+                    <h3 class="text-xl font-semibold" id="previewFileName">文件预览</h3>
+                    <button id="closeFilePreviewBtn" class="text-gray-500 hover:text-gray-700">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div class="p-6" id="filePreviewContent">
+                    <!-- 文件预览内容将在这里显示 -->
+                </div>
+                                <input type="text" id="client_filter" placeholder="输入关键字查找客户" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                                <button type="button" id="filterClientBtn" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-md transition-colors">
+                                    <i class="fas fa-search"></i>
+                                </button>
+                            </div>
+                            <div class="mt-2">
+                                <select id="clients_ID" name="clients_ID" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                                    <option value="">请选择客户</option>
+                                    <option value="new">+ 新建客户</option>
+                                    <!-- 客户选项将通过JavaScript动态加载 -->
+                                </select>
+                                <div class="text-xs text-blue-600 mt-1">双击选择项可查看客户详情</div>
+                            </div>
+                        </div>
+
+                        <!-- 客户产品关联 -->
+                        <div>
+                            <label for="clients_products_ID" class="block text-sm font-medium text-gray-700 mb-1">客户产品关联</label>
+                            <select id="clients_products_ID" name="clients_products_ID" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                                <option value="">请选择客户产品</option>
+                                <!-- 客户产品选项将通过JavaScript动态加载 -->
+                            </select>
+                        </div>
+
+                        <!-- 供应商关联 -->
+                        <div>
+                            <label for="vendor_filter" class="block text-sm font-medium text-gray-700 mb-1">供应商关联</label>
+                            <div class="flex space-x-2">
+                                <input type="text" id="vendor_filter" placeholder="输入关键字查找供应商" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                                <button type="button" id="filterVendorBtn" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-md transition-colors">
+                                    <i class="fas fa-search"></i>
+                                </button>
+                            </div>
+                            <div class="mt-2">
+                                <select id="vendors_ID" name="vendors_ID" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                                    <option value="">请选择供应商</option>
+                                    <option value="new">+ 新建供应商</option>
+                                    <!-- 供应商选项将通过JavaScript动态加载 -->
+                                </select>
+                                <div class="text-xs text-blue-600 mt-1">双击选择项可查看供应商详情</div>
+                            </div>
+                        </div>
+
+                        <!-- 供应商产品关联 -->
+                        <div>
+                            <label for="vendors_products_ID" class="block text-sm font-medium text-gray-700 mb-1">供应商产品关联</label>
+                            <select id="vendors_products_ID" name="vendors_products_ID" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                                <option value="">请选择供应商产品</option>
+                                <!-- 供应商产品选项将通过JavaScript动态加载 -->
+                            </select>
+                        </div>
+                    </div>
+       
+                    <!-- 图片上传区域 -->
+                    <div class="mt-6">
+                        <h4 class="text-lg font-medium text-gray-700 mb-3">产品图片</h4>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <!-- 图片1上传 -->
+                            <div>
+                                <label for="image1" class="block text-sm font-medium text-gray-700 mb-1">图片1</label>
+                                <div class="file-upload-container" data-input="image1">
+                                    <input type="file" id="image1" name="image1" class="hidden file-input" accept="image/*">
+                                    <div class="upload-placeholder">
+                                        <i class="fas fa-cloud-upload-alt text-gray-400 text-3xl mb-2"></i>
+                                        <p class="text-gray-500">点击或拖拽上传图片</p>
+                                    </div>
+                                    <div class="preview-container" id="image1Preview"></div>
+                                </div>
+                            </div>
+
+                            <!-- 图片2上传 -->
+                            <div>
+                                <label for="image2" class="block text-sm font-medium text-gray-700 mb-1">图片2</label>
+                                <div class="file-upload-container" data-input="image2">
+                                    <input type="file" id="image2" name="image2" class="hidden file-input" accept="image/*">
+                                    <div class="upload-placeholder">
+                                        <i class="fas fa-cloud-upload-alt text-gray-400 text-3xl mb-2"></i>
+                                        <p class="text-gray-500">点击或拖拽上传图片</p>
+                                    </div>
+                                    <div class="preview-container" id="image2Preview"></div>
+                                </div>
+                            </div>
+
+                            <!-- 图片3上传 -->
+                            <div>
+                                <label for="image3" class="block text-sm font-medium text-gray-700 mb-1">图片3</label>
+                                <div class="file-upload-container" data-input="image3">
+                                    <input type="file" id="image3" name="image3" class="hidden file-input" accept="image/*">
+                                    <div class="upload-placeholder">
+                                        <i class="fas fa-cloud-upload-alt text-gray-400 text-3xl mb-2"></i>
+                                        <p class="text-gray-500">点击或拖拽上传图片</p>
+                                    </div>
+                                    <div class="preview-container" id="image3Preview"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 文件上传区域 -->
+                    <div class="mt-6">
+                        <h4 class="text-lg font-medium text-gray-700 mb-3">产品文件</h4>
+                        <div class="file-upload-container" data-input="productFiles">
+                            <input type="file" id="productFiles" name="productFiles" class="hidden file-input" multiple>
+                            <div class="upload-placeholder">
+                                <i class="fas fa-file-upload text-gray-400 text-3xl mb-2"></i>
+                                <p class="text-gray-500">点击或拖拽上传文件（PDF、Word、Excel、视频等）</p>
+                            </div>
+                            <div class="preview-container" id="filesPreview"></div>
+                        </div>
+                    </div>
+
+                    <div class="flex justify-end space-x-3 mt-8">
+                        <button type="button" id="cancelBtn" class="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400 transition-colors">
+                            取消
+                        </button>
+                        <button type="submit" class="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors">
+                            保存产品
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- 文件预览模态框 -->
+    <div id="filePreviewModal" class="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center hidden z-50">
+        <div class="bg-white rounded-lg shadow-lg w-full max-w-4xl">
+            <div class="p-4 border-b flex justify-between items-center">
+                <h3 class="text-xl font-semibold" id="previewFileName">文件预览</h3>
+                <button id="closeFilePreviewBtn" class="text-gray-500 hover:text-gray-700">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="p-6" id="filePreviewContent">
+                <!-- 文件预览内容将在这里显示 -->
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript 文件 -->
+    <script src="./config/supabase-config.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="./services/product-service.js"></script>
+    <script src="./services/category-service.js"></script>
+    <script src="./assets/js/product-management-app.js"></script>
+</body>
+</html>
