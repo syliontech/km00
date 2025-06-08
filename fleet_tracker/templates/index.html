@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+
+{% block title %}Welcome - {{ super() }}{% endblock %}
+
+{% block content %}
+    <h1>Hello, Fleet Tracker!</h1>
+    {% if current_user.is_authenticated %}
+        <p>You are logged in as {{ current_user.username }}.</p>
+        <p><a href="{{ url_for('dashboard') }}">Go to Dashboard</a></p>
+    {% else %}
+        <p>Welcome to the Fleet Tracking application.</p>
+        <p>Please <a href="{{ url_for('login') }}">login</a> or <a href="{{ url_for('register') }}">register</a> to continue.</p>
+    {% endif %}
+{% endblock %}

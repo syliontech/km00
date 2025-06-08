@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - {{ super() }}{% endblock %}
+
+{% block content %}
+    <h2>Dashboard</h2>
+    <p>Welcome to your dashboard, {{ current_user.username }}!</p>
+
+    <h3>Your Registered Equipment</h3>
+    {% if equipment_list %}
+        <table>
+            <thead>
+                <tr>
+                    <th>Equipment UID</th>
+                    <th>Name</th>
+                    <th>Registered On (UTC)</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in equipment_list %}
+                <tr>
+                    <td>{{ item.equipment_uid }}</td>
+                    <td>{{ item.name }}</td>
+                    <td>{{ item.timestamp.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p>You have not registered any equipment yet.</p>
+    {% endif %}
+    <p>
+        <a href="{{ url_for('add_equipment') }}" class="btn btn-primary">Add New Equipment</a>
+    </p>
+
+    <hr>
+    <h3>Recent Geofence Alerts</h3>
+    {% if geofence_events %}
+        <table>
+            <thead>
+                <tr>
+                    <th>Timestamp (UTC)</th>
+                    <th>Equipment</th>
+                    <th>Geofence</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for event in geofence_events %}
+                <tr>
+                    <td>{{ event.timestamp.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+                    <td>{{ event.equipment_item.name }} ({{ event.equipment_item.equipment_uid }})</td>
+                    <td>{{ event.geofence_item.name }}</td>
+                    <td><span class="status-{{ event.status.lower() }}">{{ event.status }}</span></td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p>No recent geofence alerts.</p>
+    {% endif %}
+{% endblock %}
+
+{% block styles %}
+{{ super() }}
+<style>
+    .status-entered {
+        color: #28a745; /* Green */
+        font-weight: bold;
+    }
+    .status-exited {
+        color: #dc3545; /* Red */
+        font-weight: bold;
+    }
+    /* Add table styles if not already globally available from geofences.html */
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 20px;
+    }
+    th, td {
+        border: 1px solid #ddd;
+        padding: 8px;
+        text-align: left;
+    }
+    th {
+        background-color: #f2f2f2;
+    }
+</style>
+{% endblock %}

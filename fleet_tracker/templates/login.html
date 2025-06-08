@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% from "_formhelpers.html" import render_field %}
+
+{% block title %}Login - {{ super() }}{% endblock %}
+
+{% block content %}
+    <h2>Login</h2>
+    <form method="POST" action="{{ url_for('login') }}">
+        {{ form.hidden_tag() }}
+        <dl>
+            {{ render_field(form.email, class="form-control") }}
+            {{ render_field(form.password, class="form-control") }}
+        </dl>
+        <p>{{ form.remember() }} {{ form.remember.label }}</p>
+        <p>{{ form.submit(class="btn btn-primary") }}</p>
+    </form>
+    <p>
+        Need an account? <a href="{{ url_for('register') }}">Register here</a>
+    </p>
+{% endblock %}

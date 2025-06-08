@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% from "_formhelpers.html" import render_field %}
+
+{% block title %}Add Equipment - {{ super() }}{% endblock %}
+
+{% block content %}
+    <h2>Register New Equipment</h2>
+    <form method="POST" action="{{ url_for('add_equipment') }}">
+        {{ form.hidden_tag() }}
+        <dl>
+            {{ render_field(form.equipment_uid, class="form-control", placeholder="e.g., TRK-001-XYZ") }}
+            {{ render_field(form.name, class="form-control", placeholder="e.g., GPS Tracker Model X") }}
+        </dl>
+        <p>{{ form.submit(class="btn btn-primary") }}</p>
+    </form>
+{% endblock %}

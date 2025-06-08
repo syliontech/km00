@@ -1,0 +1,244 @@
+{% extends "base.html" %}
+
+{% block title %}Live Map - {{ super() }}{% endblock %}
+
+{% block content %}
+    <h2>Live Equipment Map</h2>
+    <div id="map" style="height: 500px; width: 100%;"></div>
+    <hr>
+    <h3>History Trajectory</h3>
+    <div>
+        <label for="history-equipment-select">Select Equipment:</label>
+        <select id="history-equipment-select">
+            <option value="">-- Select Equipment --</option>
+            {% for eq in equipments_list %}
+                <option value="{{ eq.equipment_uid }}">{{ eq.name }} ({{ eq.equipment_uid }})</option>
+            {% endfor %}
+        </select>
+        <label for="history-start-time">Start:</label>
+        <input type="datetime-local" id="history-start-time">
+        <label for="history-end-time">End:</label>
+        <input type="datetime-local" id="history-end-time">
+        <button id="show-history-btn">Show History</button>
+    </div>
+{% endblock %}
+
+{% block scripts %}
+    {{ super() }}
+    <script>
+        let map;
+        let markers = []; // To keep track of current location markers
+        let currentTrajectoryPolyline = null; // To keep track of the history polyline
+        let geofenceCircles = []; // To keep track of geofence circles on the map
+
+        function initMap() {
+            // Default center
+            map = new google.maps.Map(document.getElementById('map'), {
+                zoom: 2,
+                center: {lat: 0, lng: 0},
+                mapTypeId: 'roadmap'
+            });
+
+            fetchAndUpdateMarkers(); // Initial fetch for live markers
+            setInterval(fetchAndUpdateMarkers, 30000); // Refresh live markers every 30 seconds
+
+            fetchAndDrawGeofences(); // Initial fetch for geofences
+            // Consider how often geofences need to be refreshed. For now, once.
+            // A button or event could trigger fetchAndDrawGeofences() again if needed.
+
+            // Event listener for the history button
+            document.getElementById('show-history-btn').addEventListener('click', fetchAndDrawHistory);
+        }
+
+        async function fetchAndDrawGeofences() {
+            try {
+                const response = await fetch("{{ url_for('get_geofences_api') }}");
+                if (!response.ok) {
+                    console.error("Failed to fetch geofences:", response.statusText);
+                    return;
+                }
+                const geofencesData = await response.json();
+                drawGeofences(geofencesData);
+            } catch (error) {
+                console.error("Error fetching or processing geofences:", error);
+            }
+        }
+
+        function drawGeofences(geofencesData) {
+            geofenceCircles.forEach(circle => circle.setMap(null)); // Clear existing circles
+            geofenceCircles = [];
+
+            geofencesData.forEach(gf => {
+                const geofenceCircle = new google.maps.Circle({
+                    strokeColor: '#00FF00', // Green for geofence boundary
+                    strokeOpacity: 0.7,
+                    strokeWeight: 2,
+                    fillColor: '#00FF00',
+                    fillOpacity: 0.1,
+                    map: map,
+                    center: {lat: gf.lat, lng: gf.lng},
+                    radius: parseFloat(gf.radius), // Ensure radius is a float
+                    title: gf.name // This won't show directly, but useful for debugging
+                });
+
+                const infoWindow = new google.maps.InfoWindow({
+                     content: `<strong>Geofence: ${gf.name}</strong><br>Radius: ${gf.radius}m`
+                });
+                geofenceCircle.addListener('click', (e) => { // Show info on click
+                     infoWindow.setPosition(geofenceCircle.getCenter());
+                     infoWindow.open(map);
+                });
+                geofenceCircles.push(geofenceCircle);
+            });
+        }
+
+        async function fetchAndUpdateMarkers() {
+            try {
+                const response = await fetch("{{ url_for('get_equipment_locations') }}");
+                if (!response.ok) {
+                    console.error("Failed to fetch equipment locations:", response.statusText);
+                    return;
+                }
+                const locations = await response.json();
+                updateMapMarkers(locations);
+            } catch (error) {
+                console.error("Error fetching or processing live locations:", error);
+            }
+        }
+
+        function updateMapMarkers(locations) {
+            markers.forEach(marker => marker.setMap(null)); // Clear existing live markers
+            markers = [];
+
+            if (locations.length === 0 && !currentTrajectoryPolyline && geofenceCircles.length === 0) {
+                console.log("No equipment, history, or geofences to display.");
+            }
+
+            const currentMarkersBounds = new google.maps.LatLngBounds();
+            let activeMarkers = 0;
+
+            locations.forEach(location => {
+                if (location.lat == null || location.lng == null) {
+                    console.warn("Skipping live location with null lat/lng:", location);
+                    return;
+                }
+                const latLng = new google.maps.LatLng(location.lat, location.lng);
+
+                let isInsideAnyGeofence = false;
+                let geofenceInfo = "";
+                geofenceCircles.forEach(circle => {
+                    // Ensure google.maps.geometry is loaded for computeDistanceBetween
+                    if (google.maps.geometry && google.maps.geometry.spherical) {
+                        const distance = google.maps.geometry.spherical.computeDistanceBetween(latLng, circle.getCenter());
+                        if (distance <= circle.getRadius()) {
+                            isInsideAnyGeofence = true;
+                            // Store the name of the geofence the marker is in
+                            const circleTitle = circle.get('title') || 'Unnamed Geofence';
+                            geofenceInfo += `<li>Inside: ${circleTitle}</li>`;
+                        }
+                    } else {
+                        console.warn("Google Maps Geometry library not loaded. Cannot check geofence proximity.");
+                    }
+                });
+
+                const marker = new google.maps.Marker({
+                    position: latLng,
+                    map: map,
+                    title: `${location.name} (UID: ${location.uid}) - Live` + (isInsideAnyGeofence ? " (Inside Geofence)" : ""),
+                    icon: {
+                        path: google.maps.SymbolPath.CIRCLE,
+                        scale: 8,
+                        fillColor: isInsideAnyGeofence ? "#FFA500" : "#FF0000", // Orange if inside, Red if outside
+                        fillOpacity: 1,
+                        strokeWeight: 1
+                    }
+                });
+
+                let contentString = `<div><strong>${location.name} (Live)</strong></div>` +
+                                      `<div>UID: ${location.uid}</div>` +
+                                      `<div>Lat: ${location.lat.toFixed(5)}, Lng: ${location.lng.toFixed(5)}</div>` +
+                                      `<div>Last Seen: ${new Date(location.last_seen).toLocaleString()}</div>`;
+                if (isInsideAnyGeofence) {
+                    contentString += `<div><strong>Geofence Status:</strong><ul>${geofenceInfo}</ul></div>`;
+                }
+                const infowindow = new google.maps.InfoWindow({ content: contentString });
+                marker.addListener('click', () => { infowindow.open(map, marker); });
+                markers.push(marker);
+                currentMarkersBounds.extend(latLng);
+                activeMarkers++;
+            });
+
+            if (activeMarkers > 0 && !currentTrajectoryPolyline) {
+                 map.fitBounds(currentMarkersBounds);
+                 if (activeMarkers === 1 && map.getZoom() > 15) {
+                    map.setZoom(15);
+                 }
+            } else if (activeMarkers === 0 && !currentTrajectoryPolyline && geofenceCircles.length === 0 && map.getZoom() > 5) {
+                map.setZoom(2);
+                map.setCenter({lat:0, lng:0});
+            }
+        }
+
+        async function fetchAndDrawHistory() {
+            const equipmentUid = document.getElementById('history-equipment-select').value;
+            const startTimeStr = document.getElementById('history-start-time').value;
+            const endTimeStr = document.getElementById('history-end-time').value;
+
+            if (!equipmentUid) {
+                alert("Please select an equipment item.");
+                return;
+            }
+            if (!startTimeStr || !endTimeStr) {
+                alert("Please select both start and end times for the history.");
+                return;
+            }
+
+            const startDate = new Date(startTimeStr).toISOString().slice(0,19);
+            const endDate = new Date(endTimeStr).toISOString().slice(0,19);
+
+            const historyUrl = `/api/get_equipment_history/${equipmentUid}?start_date=${startDate}&end_date=${endDate}`;
+
+            try {
+                const response = await fetch(historyUrl);
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    console.error("Failed to fetch equipment history:", response.statusText, errorData);
+                    alert(`Error fetching history: ${errorData.error || response.statusText}`);
+                    return;
+                }
+                const historyData = await response.json();
+                drawTrajectory(historyData);
+            } catch (error) {
+                console.error("Error fetching or processing history data:", error);
+                alert("An error occurred while fetching history data.");
+            }
+        }
+
+        function drawTrajectory(historyPoints) {
+            if (currentTrajectoryPolyline) {
+                currentTrajectoryPolyline.setMap(null);
+            }
+
+            if (historyPoints.length < 2) {
+                alert("Not enough data points to draw a trajectory for the selected period.");
+                return;
+            }
+
+            const trajectoryPath = historyPoints.map(p => new google.maps.LatLng(p.lat, p.lng));
+
+            currentTrajectoryPolyline = new google.maps.Polyline({
+                path: trajectoryPath,
+                geodesic: true,
+                strokeColor: '#0000FF', // Blue
+                strokeOpacity: 0.8,
+                strokeWeight: 3
+            });
+            currentTrajectoryPolyline.setMap(map);
+
+            const bounds = new google.maps.LatLngBounds();
+            trajectoryPath.forEach(point => bounds.extend(point));
+            map.fitBounds(bounds);
+        }
+    </script>
+    <script async defer src="https://maps.googleapis.com/maps/api/js?key={{ google_maps_api_key }}&libraries=geometry&callback=initMap"></script>
+{% endblock %}

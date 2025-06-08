@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+{% from "_formhelpers.html" import render_field %}
+
+{% block title %}Manage Geofences - {{ super() }}{% endblock %}
+
+{% block content %}
+    <h2>Manage Geofences</h2>
+
+    <div class="add-geofence-form">
+        <h3>Add New Geofence</h3>
+        <form method="POST" action="{{ url_for('geofences_route') }}">
+            {{ form.hidden_tag() }}
+            <dl>
+                {{ render_field(form.name, class="form-control", placeholder="e.g., Main Warehouse") }}
+                {{ render_field(form.latitude, class="form-control", placeholder="e.g., 40.7128") }}
+                {{ render_field(form.longitude, class="form-control", placeholder="e.g., -74.0060") }}
+                {{ render_field(form.radius, class="form-control", placeholder="e.g., 100 (meters)") }}
+            </dl>
+            <p>{{ form.submit(class="btn btn-primary") }}</p>
+        </form>
+    </div>
+
+    <hr>
+
+    <h3>Your Geofences</h3>
+    {% if geofences_list %}
+        <table>
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Latitude</th>
+                    <th>Longitude</th>
+                    <th>Radius (m)</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for geofence in geofences_list %}
+                <tr>
+                    <td>{{ geofence.name }}</td>
+                    <td>{{ "%.5f"|format(geofence.latitude) }}</td>
+                    <td>{{ "%.5f"|format(geofence.longitude) }}</td>
+                    <td>{{ geofence.radius }}</td>
+                    <td>
+                        <form method="POST" action="{{ url_for('delete_geofence', geofence_id=geofence.id) }}" style="display:inline;">
+                            <input type="submit" value="Delete" class="btn btn-danger btn-sm" onclick="return confirm('Are you sure you want to delete this geofence and all its associated events?');">
+                        </form>
+                        <!-- Add link to view/edit geofence events if needed later -->
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p>You have not created any geofences yet.</p>
+    {% endif %}
+{% endblock %}
+
+{% block styles %}
+{{ super() }}
+<style>
+    .add-geofence-form {
+        margin-bottom: 20px;
+        padding: 15px;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+        background-color: #f9f9f9;
+    }
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 20px;
+    }
+    th, td {
+        border: 1px solid #ddd;
+        padding: 8px;
+        text-align: left;
+    }
+    th {
+        background-color: #f2f2f2;
+    }
+    .btn-danger {
+        background-color: #dc3545;
+        color: white;
+    }
+    .btn-sm {
+        padding: 5px 10px;
+        font-size: 0.875em;
+    }
+</style>
+{% endblock %}
